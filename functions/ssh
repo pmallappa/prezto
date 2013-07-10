@@ -1,0 +1,9 @@
+local h=`hostname -s`
+local myconf=$HOME/.ssh/${h}-config
+local cmdargs=""
+
+if [ -e $myconf ]; then
+	cmdargs="-F$myconf"
+fi
+
+command ssh ${cmdargs} $@

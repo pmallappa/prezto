@@ -1,0 +1,34 @@
+#
+# This function replaces Arguments for Mac/Linux interoperability
+#
+local S=""
+local R=""
+case "${myzenv[os]}" in 
+	linux)
+		S="-E";
+		R="-r";;
+	Darwin)
+		S="-r";
+		R="-E";;
+	*)	;;
+esac
+		
+local n=1
+local myargv=""
+myargv+=("${(@)argv}")
+while [[ $n -le $# ]]; do
+	if [ "$myargv[$n]" = "$S" ]; then
+		myargv[$n]="$R"
+	fi
+	n=$((n + 1))
+done
+
+local mysed=""
+if [ -e "/bin/sed" ]; then
+	mysed="/bin/sed"
+elif [ -e "/usr/bin/sed" ]; then
+	mysed="/usr/bin/sed"
+elif [ -e "/usr/local/bin/sed" ]; then
+	mysed="/usr/local/bin/sed"
+fi
+command ${mysed} $myargv

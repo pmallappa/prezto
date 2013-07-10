@@ -2,6 +2,8 @@
 # Sets Prezto options.
 #
 # Authors:
+#	Prem Mallappa <prem.mallappa@gmail.com>
+#   Adrian Simmons <adrian@perlucida.com>
 #   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 
@@ -30,9 +32,18 @@ zstyle ':prezto:load' pmodule \
   'history' \
   'directory' \
   'spectrum' \
+  'gnu-utility' \
   'utility' \
   'completion' \
-  'prompt'
+  'archive' \
+  'fasd' \
+  'osx' \
+  'tmux' \
+  'ruby' \
+  'prompt' \
+#  'git' \
+#  'syntax-highlighting' \
+#  'history-substring-search' \
 
 #
 # Editor
@@ -85,7 +96,7 @@ zstyle ':prezto:module:editor' keymap 'emacs'
 # Set the prompt theme to load.
 # Setting it to 'random' loads a random theme.
 # Auto set to 'off' on dumb terminals.
-zstyle ':prezto:module:prompt' theme 'sorin'
+zstyle ':prezto:module:prompt' theme 'prems'
 
 #
 # Screen
@@ -95,18 +106,28 @@ zstyle ':prezto:module:prompt' theme 'sorin'
 # zstyle ':prezto:module:screen' auto-start 'yes'
 
 #
-# SSH
+# GPG-Agent
 #
 
-# Set the SSH identities to load into the agent.
-# zstyle ':prezto:module:ssh:load' identities 'id_rsa' 'id_rsa2' 'id_github'
+# Enable SSH-Agent protocol emulation.
+# zstyle ':prezto:module:gpg-agent' ssh-support 'yes'
+
+#
+# SSH-Agent
+#
+
+# Enable ssh-agent forwarding.
+zstyle ':prezto:module:ssh-agent' forwarding 'yes'
+
+# Set ssh-agent identities to load.
+# zstyle ':prezto:module:ssh-agent' identities 'id_rsa' 'id_rsa2' 'id_github'
 
 #
 # Syntax Highlighting
 #
 
 # Set syntax highlighters.
-# By default, only the main highlighter is enabled.
+# By default main, brackets, and cursor are enabled.
 # zstyle ':prezto:module:syntax-highlighting' highlighters \
 #   'main' \
 #   'brackets' \
@@ -135,3 +156,43 @@ zstyle ':prezto:module:terminal' auto-title 'yes'
 # Auto start a session when Zsh is launched.
 # zstyle ':prezto:module:tmux' auto-start 'yes'
 
+
+##############################################
+### PREMS CONFIGS
+#############################################
+# Set the Prezto modules to load (browse modules).
+# The order matters.
+zstyle ':prems:load' pmodule \
+  'freebsd' \
+  'osx' \
+  'linux' \
+  'virtualbox' \
+  'work' \
+  #'vcs' \
+
+## Prompt
+#zstyle ':prems:module:prompt' theme 'prems'
+
+## Tmux
+#zstyle ':prems:module:tmux' exe ''
+zstyle ':prems:module:tmux' default_session 'office'
+
+zstyle ':prems:module:tmux:session:office' window_list \
+  'SDK'    \
+  'Linux'  \
+  'ttyUSB' \
+  'Misc'   \
+  'Emacs'
+
+zstyle ':prems:module:tmux:session:home'  window_list \
+  'devel'  \
+  'GoSSiP' \
+  'Blog'   \
+
+## VCS, directly passed to vcs_info enable, disable
+zstyle ':prezto:module:vcs' disabled 'all'
+zstyle ':prezto:module:vcs' enabled \
+    'git' \
+    'hg' \
+    'svn' \
+    'bzr'

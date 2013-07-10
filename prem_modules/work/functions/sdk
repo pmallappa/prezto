@@ -1,0 +1,58 @@
+
+local OCT_MODEL
+local SDK_DIR
+while getopts m:d: o
+do
+	case $o in
+      	 m) OCT_MODEL="$OPTARG";;
+	 d) SDK_DIR="$OPTARG";;
+	 *) break;;
+	 esac
+done
+
+shift $OPTIND-1
+
+if [ -z "$OCT_MODEL" ]; then
+   OCT_MODEL="OCTEON_CN68XX"
+fi
+
+if [ -z "$SDK_DIR" ]; then
+   SDK_DIR=${HOME}/work/octeon/src/sdk-base/sdk
+fi
+
+SDK_DIR=`echo $SDK_DIR | sed -e 's,[/ \t]*$,,'`
+
+#if we are already in setup SDK, remove all from PATH
+cleanup_paths() {
+    if [ -z "$1" ]; then
+	return
+    fi
+    for dir in $1/{tools/bin,tools-le/bin,host/bin,host/remote-utils,simulator/bin}
+    do
+	path_remove $dir
+    done
+}
+
+if [ ! -z "$OCTEON_ROOT" ]; then
+    cleanup_paths $OCTEON_ROOT
+fi
+
+cleanup_paths $SDK_DIR
+
+if [ ! -e "$SDK_DIR"/env-setup ]; then 
+	if [ -e "$SDK_DIR"/sdk/env-setup ]; then
+		SDK_DIR="$SDK_DIR"/sdk
+	else
+		echo "Not valid SDK dir"
+		return 200
+	fi
+fi
+
+pushd $SDK_DIR && source env-setup $OCT_MODEL $*
+popd
+
+unset SDK_DIR OCT_MODEL
+
+# Local Variables:
+# mode:shell-script
+# End:

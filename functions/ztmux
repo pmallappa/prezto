@@ -1,0 +1,74 @@
+[ ! -z "${TMUX}" ] && echo "Running inside TMUX" && return 1
+if ! zstyle -t ':prezto:module:tmux' loaded ; then
+    echo "Tmux not loaded"
+    return 0
+fi
+## Debugging
+#set -x
+
+local tmuxexe
+zstyle -s ':prems:module:tmux' exe 'tmuxexe'
+
+if [ -z "$tmuxexe" ]; then
+    echo "TMUX not found in your path"
+    return 1
+fi
+
+zstyle -d ":prems:module:tmux" emacs_window 'ew'
+zstyle -s ":prems:module:tmux" default_session 'ses'
+
+[ ! -z "$1" ] && ses=$1
+
+local tmux_args="-u2"
+
+# if the session is already running, just attach to it.
+${tmuxexe} has-session -t $ses 2>/dev/null
+if [ $? -eq 0 ]; then
+    echo "Session \"$ses\" already exists."
+    sleep 1
+    
+    echo "Press X to exit, any other to attach: "
+    read select
+    if [[ "X$select" == "Xx" || "X$select" == "XX" ]]; then
+    	return 0;
+    fi
+    ${tmuxexe} ${tmux_args} attach -t $ses && return 0
+fi
+
+# create a new session, named $ses, and detach from it
+${tmuxexe} ${tmux_args} new-session -d -s $ses
+
+local window_list
+zstyle -a ":prems:module:tmux:session:$ses" window_list 'window_list'
+local window_num=1
+
+for win in $window_list
+do
+    case $win in
+    [Ee][Mm][Aa][Cc][Ss])
+        echo "Emacs is ${EMACS}"
+        ${tmuxexe} ${tmux_args} new-window  -t $ses:$window_num -n$win "exec ${EMACS} -nw"
+        ;;
+    *)
+        #echo "${t} ${tmux_args} new-window  -dk  -t $ses:$win -nzsh 'exec zsh'"
+        ${tmuxexe} ${tmux_args} new-window  -dk  -t $ses:$window_num -n$win 'exec zsh -l'
+    esac
+    window_num=$((window_num+1))
+done
+
+
+#${t} new-session -d -s "root"
+#${t} new-window    -t "root:0" -k "sudo su -"
+#${t} new-window    -t "root:1" -k "sudo su -"
+#${t} new-session -d -s "ssh"
+#${t} new-window    -t "ssh:0"
+
+${tmuxexe} ${tmux_args} select-window -t $ses:1
+${tmuxexe} ${tmux_args} attach -t $ses
+
+unset ew
+unset t
+unset ses
+# Local Variables:
+#    mode:shell-script
+# End:

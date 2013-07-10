@@ -1,0 +1,173 @@
+##
+#
+# Simplest form customization
+# Adopted from peepcode
+#
+# Authors:
+#   Prem Mallappa <prem.mallappa@gmail.com>
+#
+#
+
+function +vi-git-status() {
+  # Check for untracked files or updated submodules since vcs_info does not.
+  if [[ -n $(git ls-files --other --exclude-standard 2> /dev/null) ]]; then
+    hook_com[unstaged]=' %F{8}✗%f'
+  fi
+}
+
+### check-for-changes just in some places ####################################
+# `~/work/octeon'.
+# There are the projects I want the information for most. They are also
+# a lot smaller than the linux kernel so the information can be retrieved
+# instantaneously - even on my old laptop at 600MHz. And the following code
+# enables `check-for-changes' only in that subtree:
+zstyle -e ':vcs_info:git:*' \
+    check-for-changes 'estyle-cfc && reply=( true ) || reply=( false )'
+
+function estyle-cfc() {
+    local d
+    local -a cfc_dirs
+    cfc_dirs=(
+        ${HOME}/work/octeon/*(/)
+    )
+
+    for d in ${cfc_dirs}; do
+        d=${d%/##}
+        [[ $PWD == $d(|/*) ]] && return 0
+    done
+    return 1
+}
+
+
+function prompt_yadu_precmd {
+  vcs_info
+
+  if (( $+functions[ruby-info] )); then
+    ruby-info
+  fi
+}
+
+ 
+# End the rprompt, closing any open segments
+prompt_rend() {
+  if [[ -n $CURRENT_BG ]]; then
+    echo -n " %{%k%F{$CURRENT_BG}%}"
+  else
+    echo -n "%{%k%}"
+  fi
+  echo -n "%{%f%}"
+  CURRENT_BG=''
+}
+
+function prompt_host() {
+    local hostcolor
+
+    case $HOST in
+	pmallappa-server)
+            hostcolor="%F{blue}%m%f"
+            ;;
+	pmallappa-laptop)
+            hostcolor="%B%F{green}%m%b%f"
+            ;;
+	pmallappa-test)
+            hostcolor="%F{cyan}%m%f"
+            ;;
+	imac* | iMac*)
+	    hostcolor="%F{magenta}%m%f"
+	    ;;
+	*-vm)
+            hostcolor="%F{white}%m%f"
+            ;;
+	*)
+            hostcolor="%F{gray}%m%f"
+            ;;
+    esac
+
+    echo ${hostcolor}
+}
+
+function __vcs_style_setup {
+    prompt_opts=(cr percent subst)
+    zstyle ':prezto:module:editor:info:completing' format '%B%F{red}...%b%f'
+    #zstyle ':prezto:module:editor:info:keymap:primary' format ' %B%F{red}❯%F{yellow}❯%F{green}❯%b%f'
+    zstyle ':prezto:module:editor:info:keymap:primary' format ' %B%F{red}>%F{yellow}>%F{green}>%b%f'
+    zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format ' %F{red}♺%f'
+    zstyle ':prezto:module:editor:info:keymap:alternate' format ' %B%F{green}<%F{yellow}<%F{red}<%b%f'
+    zstyle ':prezto:module:vcs:info:action' format ':%B%F{yellow}%s%b%f'
+    zstyle ':prezto:module:vcs:info:added' format '%B%F{green}✚ %b%f'
+    zstyle ':prezto:module:vcs:info:ahead' format '%B%F{yellow}⬆ %A%b%f'
+    zstyle ':prezto:module:vcs:info:behind' format '%B%F{yellow}⬇ %B%b%f'
+    zstyle ':prezto:module:vcs:info:ahead_or_behind' format '%B%F{yellow}%Z%b%f'
+    zstyle ':prezto:module:vcs:info:branch' format ':%F{green}%b%f'
+    zstyle ':prezto:module:vcs:info:commit' format ':%F{green}%.7c%f'
+    zstyle ':prezto:module:vcs:info:deleted' format '%B%F{red}✘ %f%b'
+    zstyle ':prezto:module:vcs:info:modified' format '%B%F{red}✱ %b%f'
+    zstyle ':prezto:module:vcs:info:position' format ':%F{red}%p%f'
+    zstyle ':prezto:module:vcs:info:renamed' format '%B%F{cyan}➜ %b%f'
+    zstyle ':prezto:module:vcs:info:stashed' format ':%B%F{cyan}%S%b%f'
+    zstyle ':prezto:module:vcs:info:unmerged' format ' %B%F{yellow}═%b%f'
+    zstyle ':prezto:module:vcs:info:untracked' format '%F{white}◼%f'
+    zstyle ':prezto:module:vcs:info:remote' format '=>%B%F{magenta}%R%b%f'
+    zstyle ':prezto:module:vcs:info:name' format '|%B%F{blue}%v%b%f'
+    zstyle ':prezto:module:git:info:clean' format '?'
+
+    zstyle ':prezto:module:vcs:info:keys' format \
+    'prompt' '%S${vcs_info[vcs]|%b$(coalesce "%b%Z%R" "%p" "%c")%s' \
+    'rprompt' '%a%d%m%r%U%u%C'\
+    'status' '%a%d%m%r%U%u%C'
+#	'prompt' '%S%v${pvcs_info[status]:+(${pvcs_info[status]// $/})}$(coalesce "%b%Z%R" "%p" "%c")%s' \
+}
+
+
+# This is run once at the beginning
+function prompt_yadu_setup {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+  prompt_opts=(cr percent subst)
+
+  # Load required functions.
+  autoload -Uz add-zsh-hook
+  autoload -Uz vcs_info
+
+  # Add hook for calling vcs_info before each command.
+  add-zsh-hook precmd prompt_yadu_precmd
+
+  # Set vcs_info parameters.
+  zstyle ':vcs_info:*' enable git
+  zstyle ':vcs_info:*' check-for-changes true
+  zstyle ':vcs_info:*' get-revision true
+  #zstyle ':vcs_info:*' use-simple true
+  zstyle ':vcs_info:*' unstagedstr ' %F{8}✗%f'
+  zstyle ':vcs_info:*' formats ' %F{8}%b%f %F{white}%.7i%f%u'
+  zstyle ':vcs_info:*' actionformats ' %F{8}%b%f %F{white}%.7i%f +%a%u'
+  zstyle ':vcs_info:git*+set-message:*' hooks git-status
+
+  # Set ruby-info parameters.
+  zstyle ':prezto:module:ruby:info:version' format ' %F{white}%v%f'
+
+  # Define prompts.
+  PROMPT='
+${vcs_info[vcs]} %~
+%(?.%F{green}${1:-☻ }%f.%F{red}${1:-☻ }%f)'
+RPROMPT='${ruby_info[version]}${vcs_info_msg_0_}'
+
+}
+
+function prompt_yadu_preview {
+  local +h PROMPT='%# '
+  local +h RPROMPT=''
+  local +h SPROMPT=''
+
+  if (( $# > 0 )); then
+    prompt_preview_theme 'yadu' "$@"
+  else
+    prompt_preview_theme 'yadu'
+    print
+    prompt_preview_theme 'yadu' "❯"
+    print
+    prompt_preview_theme 'yadu' "$"
+  fi
+}
+
+prompt_yadu_setup "$@"
+

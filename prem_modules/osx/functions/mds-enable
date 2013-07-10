@@ -1,0 +1,8 @@
+mds-enable(){
+    sudo mdutil -a -i on
+}
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

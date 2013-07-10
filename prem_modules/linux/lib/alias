@@ -1,0 +1,63 @@
+alias cp='nocorrect cp'
+alias e='emacsclient -f ~/.emacs.d/server/server -n'
+alias grep='grep -i --color=auto'
+alias g=grep
+alias gr='grep -r'
+alias frp=find-replace-recursive
+alias frm=find-remove-recursive
+
+alias l='/bin/ls'
+alias ls='ls -F --color=auto'
+alias la='ls -AF --color=auto'
+alias ll='ls -lhF --color=auto'
+alias lla='ls -lhAF --color=auto'
+alias lt='ls -lhtF --color=auto'
+alias lta='ls -lhtAF --color=auto'
+alias mv='nocorrect mv'
+alias o=xdg-open
+alias open=xdg-open
+alias rm='nocorrect rm'
+alias rmf='rm -rf'
+
+alias rscp='rsync --partial --progress --rsh=ssh'
+alias scp='scp -C'
+alias srsync='rsync -Pazhv --delete -e ssh '
+alias ssh_proxy='ssh -C2qTnN -D 9999'
+alias speedtest='wget --output-document=/dev/null http://speedtest.wdc01.softlayer.com/downloads/test500.zip'
+alias zip='zip -r -9'
+
+###############
+# Pacman alias examples
+###############
+alias pacupg='sudo pacman -Syu'	# Synchronize with repositories before upgrading packages that are out of date on the local system.
+alias pacin='sudo pacman -S' # Install specific package(s) from the repositories
+alias pacins='sudo pacman -U' # Install specific package not from the repositories but from a file 
+alias pacre='sudo pacman -R' # Remove the specified package(s), retaining its configuration(s) and required dependencies
+alias pacrem='sudo pacman -Rns'	# Remove the specified package(s), its configuration(s) and unneeded dependencies
+alias pacrep='pacman -Si' # Display information about a given package in the repositories
+alias pacsearch='pacman -Ss' # Search for package(s) in the repositories
+alias pacloc='pacman -Qi' # Display information about a given package in the local database
+alias paclocs='pacman -Qs' # Search for package(s) in the local database
+alias pacclean='pacman -Sc'
+# Additional pacman alias examples
+alias pacupd='sudo pacman -Sy && sudo abs' # Update and refresh the local package and ABS databases against repositories
+alias pacinsd='sudo pacman -S --asdeps'	# Install given package(s) as dependencies of another package
+alias pacmir='sudo pacman -Syy'	# Force refresh of all package lists after updating /etc/pacman.d/mirrorlist
+
+#systemctl aliases
+alias sctldisabled="sudo systemctl list-unit-files|grep disabled|less" #lists disabled services
+alias sctlenabled="sudo systemctl list-unit-files|grep enabled|less" #lists enabled services
+alias sctlfailed="sudo systemctl --failed" #lists failed services
+alias sctlfind="sudo systemctl list-unit-files|grep -i"
+alias sctlst="systemctl status"
+alias sctlenable="sudo systemctl enable"
+alias sctldisable="sudo systemctl disable"
+alias sctlrestart="sudo systemctl restart"
+alias sctlstart="sudo systemctl start"
+alias sctlstop="sudo systemctl stop"
+alias sctlreloadconfig="sudo systemctl reload"
+
+# Local Variables:
+#    mode:shell-script
+# End:
+
