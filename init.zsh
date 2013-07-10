@@ -17,6 +17,22 @@ if ! autoload -Uz is-at-least || ! is-at-least "$min_zsh_version"; then
 fi
 unset min_zsh_version
 
+## env_append PATH ~/bin
+env_append() { env_remove $1 $2 && export $1="`printenv $1`:$2"; }
+env_prepend () { env_remove $1 $2 && export $1="$2:`printenv $1`"; }
+
+## env_remove PATH ~/bin
+env_remove ()  { 
+    if [[ "X$1" == "X" ]]; then
+        "Please provide a Environment to remove"
+        return
+    fi
+    export $1=`printenv $1 | awk -v RS=: -v ORS=: '$0 != "'$2'"' | sed 's/:$//'`;
+}
+path_append ()  { env_append PATH $1; }
+path_prepend () { env_prepend PATH $1; }
+path_remove () { env_remove PATH $1; }
+
 #
 # Module Loader
 #
@@ -26,12 +42,14 @@ function pmodload {
   local -a pmodules
   local pmodule
   local pfunction_glob='^([_.]*|prompt_*_setup|README*)(.N:t)'
+  local zd=${ZDOTDIR:-${HOME}}
+  local moddir=${zd}"/modules"
 
   # $argv is overridden in the anonymous function.
   pmodules=("$argv[@]")
 
   # Add functions to $fpath.
-  fpath=(${pmodules:+${ZDOTDIR:-$HOME}/.zprezto/modules/${^pmodules}/functions(/FN)} $fpath)
+  fpath=(${pmodules:+${moddir}/${^pmodules}/functions(/FN)} $fpath)
 
   function {
     local pfunction
@@ -40,7 +58,7 @@ function pmodload {
     setopt LOCAL_OPTIONS EXTENDED_GLOB
 
     # Load Prezto functions.
-    for pfunction in ${ZDOTDIR:-$HOME}/.zprezto/modules/${^pmodules}/functions/$~pfunction_glob; do
+    for pfunction in ${moddir}/${^pmodules}/functions/$~pfunction_glob; do
       autoload -Uz "$pfunction"
     done
   }
@@ -49,19 +67,19 @@ function pmodload {
   for pmodule in "$pmodules[@]"; do
     if zstyle -t ":prezto:module:$pmodule" loaded 'yes' 'no'; then
       continue
-    elif [[ ! -d "${ZDOTDIR:-$HOME}/.zprezto/modules/$pmodule" ]]; then
+    elif [[ ! -d "${moddir}/$pmodule" ]]; then
       print "$0: no such module: $pmodule" >&2
       continue
     else
-      if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/modules/$pmodule/init.zsh" ]]; then
-        source "${ZDOTDIR:-$HOME}/.zprezto/modules/$pmodule/init.zsh"
+      if [[ -s "${moddir}/$pmodule/init.zsh" ]]; then
+        source "${moddir}/$pmodule/init.zsh"
       fi
 
       if (( $? == 0 )); then
         zstyle ":prezto:module:$pmodule" loaded 'yes'
       else
         # Remove the $fpath entry.
-        fpath[(r)${ZDOTDIR:-$HOME}/.zprezto/modules/${pmodule}/functions]=()
+        fpath[(r)${moddir}/${pmodule}/functions]=()
 
         function {
           local pfunction
@@ -92,10 +110,13 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zpreztorc" ]]; then
 fi
 
 # Disable color and theme in dumb terminals.
-if [[ "$TERM" == 'dumb' ]]; then
+case $TERM in
+	'9term' | 'dumb' | 'eterm')
   zstyle ':prezto:*:*' color 'no'
   zstyle ':prezto:module:prompt' theme 'off'
-fi
+  ;;
+  *)
+esac
 
 # Load Zsh modules.
 zstyle -a ':prezto:load' zmodule 'zmodules'
