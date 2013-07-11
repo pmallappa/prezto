@@ -28,7 +28,15 @@ function prompt_steeef_precmd {
   if (( $+functions[python-info] )); then
     python-info
   fi
+
+  # Shows symbol '±' if you're currently at a git repo and '$' all other times
+  if [[ -n $(git branch > /dev/null 2> /dev/null) ]]; then
+    prompt_char="±"
+  else
+    prompt_char="$"
+  fi
 }
+
 
 function prompt_steeef_setup {
   setopt LOCAL_OPTIONS
@@ -70,17 +78,18 @@ function prompt_steeef_setup {
   #   %S - path in the repository
   local branch_format="(${_prompt_steeef_colors[1]}%b%f%u%c)"
   local action_format="(${_prompt_steeef_colors[5]}%a%f)"
-  local unstaged_format="${_prompt_steeef_colors[2]} ●%f"
+  local unstaged_format="${_prompt_steeef_colors[4]} ●%f"
   local staged_format="${_prompt_steeef_colors[5]} ●%f"
 
   # Set vcs_info parameters.
-  zstyle ':vcs_info:*' enable bzr git hg svn
+  zstyle ':vcs_info:*' enable bzr git svn
   zstyle ':vcs_info:*:prompt:*' check-for-changes true
   zstyle ':vcs_info:*:prompt:*' unstagedstr "${unstaged_format}"
   zstyle ':vcs_info:*:prompt:*' stagedstr "${staged_format}"
   zstyle ':vcs_info:*:prompt:*' actionformats "${branch_format}${action_format}"
   zstyle ':vcs_info:*:prompt:*' formats "${branch_format}"
   zstyle ':vcs_info:*:prompt:*' nvcsformats   ""
+  zstyle ':vcs_info:git*+set-message:*' hooks git-status
 
   # Set python-info parameters.
   zstyle ':prezto:module:python:info:virtualenv' format '(%v)'
@@ -88,7 +97,7 @@ function prompt_steeef_setup {
   # Define prompts.
   PROMPT="
 ${_prompt_steeef_colors[5]}%n%f@${_prompt_steeef_colors[1]}%m%f | ${_prompt_steeef_colors[2]}%~%f "'${vcs_info_msg_0_}'"
-"'$python_info[virtualenv]'"$ "
+"'$python_info[virtualenv]'"${prompt_char} "
   RPROMPT=''
 }
 
