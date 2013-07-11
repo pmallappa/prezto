@@ -31,9 +31,9 @@ function prompt_steeef_precmd {
 
   # Shows symbol '±' if you're currently at a git repo and '$' all other times
   if [[ -n $(git branch > /dev/null 2> /dev/null) ]]; then
-    prompt_char="±"
+    prompt_char="± "
   else
-    prompt_char="$"
+    prompt_char="$ "
   fi
 }
 
@@ -97,7 +97,7 @@ function prompt_steeef_setup {
   # Define prompts.
   PROMPT="
 ${_prompt_steeef_colors[5]}%n%f@${_prompt_steeef_colors[1]}%m%f | ${_prompt_steeef_colors[2]}%~%f "'${vcs_info_msg_0_}'"
-"'$python_info[virtualenv]'"${prompt_char} "
+"'$python_info[virtualenv]'"${prompt_char}"
   RPROMPT=''
 }
 
