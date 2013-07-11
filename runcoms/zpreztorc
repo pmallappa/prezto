@@ -33,7 +33,9 @@ zstyle ':prezto:load' pmodule \
   'spectrum' \
   'utility' \
   'completion' \
+  'archive' \
   'git' \
+  'osx' \
   'macports' \
   'prompt'
 
