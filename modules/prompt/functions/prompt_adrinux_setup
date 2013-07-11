@@ -25,10 +25,6 @@ function prompt_adrinux_precmd {
 
   vcs_info 'prompt'
 
-  if (( $+functions[python-info] )); then
-    python-info
-  fi
-
   # Shows symbol '±' if you're currently at a git repo and '$' all other times
   if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) == 'true' ]]; then
     prompt_char="± "
@@ -91,13 +87,10 @@ function prompt_adrinux_setup {
   zstyle ':vcs_info:*:prompt:*' nvcsformats   ""
   zstyle ':vcs_info:git*+set-message:*' hooks git-status
 
-  # Set python-info parameters.
-  zstyle ':prezto:module:python:info:virtualenv' format '(%v)'
-
   # Define prompts.
   PROMPT="
 ${_prompt_adrinux_colors[5]}%n%f@${_prompt_adrinux_colors[1]}%m%f | ${_prompt_adrinux_colors[2]}%~%f "'${vcs_info_msg_0_}'"
-"'$python_info[virtualenv]'""'${prompt_char}'""
+"'${prompt_char}'""
   RPROMPT=''
 }
 
