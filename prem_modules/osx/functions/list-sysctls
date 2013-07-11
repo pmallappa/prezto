@@ -1,0 +1,6 @@
+list-sysctls () { set -A reply $(sysctl -AN ${1%.*} 2>/dev/null) }
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

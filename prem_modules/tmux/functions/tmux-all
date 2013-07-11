@@ -1,0 +1,24 @@
+##
+# Send command to all windows in a session
+##
+local -a sessions
+sessions=(${(@)$(tmux list-sessions -F '#S')})
+
+set -x
+
+if (( ${#sessions} > 1 )); then
+    local s=$sessions[1]
+
+
+    
+	print -l "${sessions[@]} ${#sessions}"
+	echo -n "Select a sessoin [$sessions]:"
+	read s
+fi
+set +x
+
+for window in `tmux list-windows -F '#I'`; do
+    for pane in `tmux list-panes -t $s:$window -F '#P'`; do
+	tmux send-keys -t "$s:$window.$pane" "$@" "C-m"
+    done
+done

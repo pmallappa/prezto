@@ -17,6 +17,8 @@ if ! autoload -Uz is-at-least || ! is-at-least "$min_zsh_version"; then
 fi
 unset min_zsh_version
 
+#export ZDOTDIR=${HOME}
+
 ## env_append PATH ~/bin
 env_append() { env_remove $1 $2 && export $1="`printenv $1`:$2"; }
 env_prepend () { env_remove $1 $2 && export $1="$2:`printenv $1`"; }
@@ -43,13 +45,14 @@ function pmodload {
   local pmodule
   local pfunction_glob='^([_.]*|prompt_*_setup|README*)(.N:t)'
   local zd=${ZDOTDIR:-${HOME}}
-  local moddir=${zd}"/modules"
+  local modulesdir=${ZMODDIR:-${zd}/".zprezto/modules"}
+
 
   # $argv is overridden in the anonymous function.
   pmodules=("$argv[@]")
 
   # Add functions to $fpath.
-  fpath=(${pmodules:+${moddir}/${^pmodules}/functions(/FN)} $fpath)
+  fpath=(${pmodules:+${modulesdir}/${^pmodules}/functions(/FN)} $fpath)
 
   function {
     local pfunction
@@ -58,28 +61,29 @@ function pmodload {
     setopt LOCAL_OPTIONS EXTENDED_GLOB
 
     # Load Prezto functions.
-    for pfunction in ${moddir}/${^pmodules}/functions/$~pfunction_glob; do
+    for pfunction in ${modulesdir}/${^pmodules}/functions/$~pfunction_glob; do
       autoload -Uz "$pfunction"
     done
   }
 
   # Load Prezto modules.
   for pmodule in "$pmodules[@]"; do
+    local moddir="${modulesdir}/$pmodule"
     if zstyle -t ":prezto:module:$pmodule" loaded 'yes' 'no'; then
       continue
-    elif [[ ! -d "${moddir}/$pmodule" ]]; then
+    elif [[ ! -d "${modulesdir}/$pmodule" ]]; then
       print "$0: no such module: $pmodule" >&2
       continue
     else
-      if [[ -s "${moddir}/$pmodule/init.zsh" ]]; then
-        source "${moddir}/$pmodule/init.zsh"
+      if [[ -s "${moddir}/init.zsh" ]]; then
+        source "${moddir}/init.zsh"
       fi
 
       if (( $? == 0 )); then
         zstyle ":prezto:module:$pmodule" loaded 'yes'
       else
         # Remove the $fpath entry.
-        fpath[(r)${moddir}/${pmodule}/functions]=()
+        fpath[(r)${moddir}/functions]=()
 
         function {
           local pfunction
@@ -89,7 +93,7 @@ function pmodload {
           setopt LOCAL_OPTIONS EXTENDED_GLOB
 
           # Unload Prezto functions.
-          for pfunction in ${ZDOTDIR:-$HOME}/.zprezto/modules/$pmodule/functions/$~pfunction_glob; do
+          for pfunction in $moddir/functions/$~pfunction_glob; do
             unfunction "$pfunction"
           done
         }
@@ -132,4 +136,12 @@ unset zfunction{s,}
 zstyle -a ':prezto:load' pmodule 'pmodules'
 pmodload "$pmodules[@]"
 unset pmodules
+
+#set -x
+# Load Prems modules, override anything that is not needed
+zstyle -a ':prems:load' pmodule 'pmodules'
+ZMODDIR="${ZDOTDIR:-$HOME}/.zprezto/prem_modules"
+pmodload "$pmodules[@]"
+unset pmodules
+unset ZMODDIR
 

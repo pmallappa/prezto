@@ -1,0 +1,8 @@
+function cdf(){
+    cd "$(posd)"
+}
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

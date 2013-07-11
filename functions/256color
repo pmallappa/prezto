@@ -1,0 +1,13 @@
+# native function for showing 256 colors, properly formatted:
+256color() {
+  for line in {0..15}; do for col in {0..15}; do
+      local code=$(( $col * 16 + ${line} ))
+      printf $'\e[38;05;%dm %03d' ${code} ${code}
+    done
+  print ; done
+}
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

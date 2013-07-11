@@ -1,5 +1,4 @@
-#
-# Sets Prezto options.
+# ets Prezto options.
 #
 # Authors:
 #   Sorin Ionescu <sorin.ionescu@gmail.com>
@@ -27,13 +26,20 @@ zstyle ':prezto:load' pmodule \
   'environment' \
   'terminal' \
   'editor' \
-  'git' \
   'history' \
   'directory' \
   'spectrum' \
+  'gnu-utility' \
   'utility' \
   'completion' \
-  'prompt'
+  'archive' \
+  'fasd' \
+  'osx' \
+  'tmux' \
+  'ruby' \
+  'prompt' \
+#  'syntax-highlighting' \
+#  'history-substring-search' \
 
 #
 # Editor
@@ -50,7 +56,7 @@ zstyle ':prezto:module:editor' keymap 'emacs'
 #
 
 # Ignore submodules when they are 'dirty', 'untracked', 'all', or 'none'.
-zstyle ':prezto:module:git:status:ignore' submodules 'none'
+# zstyle ':prezto:module:git:status:ignore' submodules 'all'
 
 #
 # GNU Utility
@@ -58,19 +64,6 @@ zstyle ':prezto:module:git:status:ignore' submodules 'none'
 
 # Set the command prefix on non-GNU systems.
 # zstyle ':prezto:module:gnu-utility' prefix 'g'
-
-#
-# History Substring Search
-#
-
-# Set the query found color.
-# zstyle ':prezto:module:history-substring-search:color' found ''
-
-# Set the query not found color.
-# zstyle ':prezto:module:history-substring-search:color' not-found ''
-
-# Set the search globbing flags.
-# zstyle ':prezto:module:history-substring-search' globbing-flags ''
 
 #
 # Pacman
@@ -86,7 +79,7 @@ zstyle ':prezto:module:git:status:ignore' submodules 'none'
 # Set the prompt theme to load.
 # Setting it to 'random' loads a random theme.
 # Auto set to 'off' on dumb terminals.
-zstyle ':prezto:module:prompt' theme 'paradox'
+zstyle ':prezto:module:prompt' theme 'mudasobwa'
 
 #
 # Screen
@@ -96,31 +89,34 @@ zstyle ':prezto:module:prompt' theme 'paradox'
 # zstyle ':prezto:module:screen' auto-start 'yes'
 
 #
-# SSH
+# GPG-Agent
 #
 
-# Set the SSH identities to load into the agent.
-# zstyle ':prezto:module:ssh:load' identities 'id_rsa' 'id_rsa2' 'id_github'
+# Enable SSH-Agent protocol emulation.
+# zstyle ':prezto:module:gpg-agent' ssh-support 'yes'
+
+#
+# SSH-Agent
+#
+
+# Enable ssh-agent forwarding.
+zstyle ':prezto:module:ssh-agent' forwarding 'yes'
+
+# Set ssh-agent identities to load.
+# zstyle ':prezto:module:ssh-agent' identities 'id_rsa' 'id_rsa2' 'id_github'
 
 #
 # Syntax Highlighting
 #
 
 # Set syntax highlighters.
-# By default, only the main highlighter is enabled.
+# By default main, brackets, and cursor are enabled.
 # zstyle ':prezto:module:syntax-highlighting' highlighters \
 #   'main' \
 #   'brackets' \
 #   'pattern' \
 #   'cursor' \
 #   'root'
-#
-# Set syntax highlighting styles.
-# zstyle ':prezto:module:syntax-highlighting' styles \
-#   'builtin' 'bg=blue' \
-#   'command' 'bg=blue' \
-#   'function' 'bg=blue'
-#
 
 #
 # Terminal
@@ -134,5 +130,46 @@ zstyle ':prezto:module:terminal' auto-title 'yes'
 #
 
 # Auto start a session when Zsh is launched.
-# zstyle ':prezto:module:tmux' auto-start 'yes'
+#zstyle ':prezto:module:tmux' auto-start 'yes'
 
+
+##############################################
+### PREMS CONFIGS
+#############################################
+# Set the Prezto modules to load (browse modules).
+# The order matters.
+zstyle ':prems:load' pmodule \
+  'freebsd' \
+  'osx' \
+  'linux' \
+  'vcs' \
+  'virtualbox' \
+  'work' \
+# 'tmux'
+
+## Prompt
+#zstyle ':prems:module:prompt' theme 'prems'
+
+## Tmux
+#zstyle ':prems:module:tmux' exe ''
+zstyle ':prems:module:tmux' default_session 'office'
+
+zstyle ':prems:module:tmux:session:office' window_list \
+  'SDK'    \
+  'Linux'  \
+  'ttyUSB' \
+  'Misc'   \
+  'Emacs'
+
+zstyle ':prems:module:tmux:session:home'  window_list \
+  'devel'  \
+  'GoSSiP' \
+  'Blog'   \
+
+## VCS, directly passed to vcs_info enable, disable
+zstyle ':prems:module:vcs' disabled 'all'
+zstyle ':prems:module:vcs' enabled \
+    'git' \
+    'hg' \
+    'svn' \
+    'bzr'

@@ -1,0 +1,14 @@
+##
+# Send command to all panes in current window
+##
+
+local -a sessions
+local curwindow
+curwindow=$(tmux display-message -p "#I")
+cursession=$(tmux display-message -p "#S")
+
+for pane in $(tmux list-panes -t $s:$curwindow -F '#P'); do
+	tmux send-keys -t "$s:$curwindow.$pane" "$@" "C-m"
+done
+
+#npanes=${#${(f):-"$(tmux list-panes -t $session:$curwindow)"}}

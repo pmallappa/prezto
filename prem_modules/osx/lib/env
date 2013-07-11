@@ -1,0 +1,23 @@
+
+EMACS="/Applications/Emacs.app/Contents/MacOS/Emacs"
+
+function find_emacs_client() {
+	echo "/usr/local/bin/emacsclient"
+}
+
+EMACSCLIENT=`find_emacs_client`
+export GOROOT=${HOME}/devel/compilers/goroot
+export GOARCH=amd64
+export GOOS=darwin
+export GOBIN=${GOROOT}/bin
+
+if [ -e /usr/local/plan9 ]; then
+	export PLAN9=/usr/local/plan9
+	path+=${PLAN9}/bin
+fi
+
+export PATH=$PATH:${GOROOT}/bin
+
+# Local Variables:
+#    mode:shell-script
+# End:

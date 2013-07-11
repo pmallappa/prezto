@@ -1,0 +1,149 @@
+
+# Load dependencies.
+pmodload 'helper'
+
+function prompt_prems_pwd {
+  local pwd="${PWD/#$HOME/~}"
+  _prompt_prems_pwd="%~"
+  #if [[ "$pwd" == (#m)[/~] ]]; then
+  #  _prompt_prems_pwd="$MATCH"
+  #  unset MATCH
+  #else
+  #  _prompt_prems_pwd="${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}/${pwd:t}"
+  #fi
+}
+
+# Must run vcs_info when changing directories.
+prompt_prems_chpwd() {
+    zstyle ':prems:module:vcs' run 'yes'
+    unset pvcs_info
+    #vcs_info
+}
+
+function prompt_prems_precmd {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+
+  # Format PWD.
+  prompt_prems_pwd
+
+  # Get Git repository information.
+  #if (( $+functions[vcs_info] )); then
+  #zstyle ':prems:module:vcs' run 'yes'
+  vcs_info
+  #fi
+}
+
+[[ -z "${RST}" ]] && RST="%{$reset_color%}"
+
+function prems_set_prompt() {
+    local NL=$'\n'
+    local line1=""
+    local line2=""
+    local screenwidth=$((1 * ${COLUMNS} - 1))  # promptsz contains length including color control
+    local hostcolor
+
+    case $HOST in
+	pmallappa-server)
+            hostcolor="%F{blue}%m%f"
+            ;;
+	pmallappa-laptop)
+            hostcolor="%B%F{green}%m%b%f"
+            ;;
+	pmallappa-test)
+            hostcolor="%F{cyan}%m%f"
+            ;;
+	imac* | iMac*)
+	    hostcolor="%F{magenta}%m%f"
+	    ;;
+	*-vm)
+            hostcolor="%F{white}%m%f"
+            ;;
+	*)
+            hostcolor="%F{gray}%m%f"
+            ;;
+    esac
+
+    line1='${_prompt_prems_pwd}${pvcs_info:+${(e)pvcs_info[prompt]}}'
+    line2="$hostcolor"'%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
+    #local tmpps1="${line1}${line2}"
+    #local zero='%([BSUbfksu]|([FB]|){*})'
+    #local promptsz=${#${(S%%)tmpps1//$~zero/}}
+    #tmpps1=
+    #promptsz=
+    if [[ $promptsz -gt $screenwidth ]]; then
+       middle="$NL"
+    else
+        middle="$NL"
+    fi
+    myprompt="[${line1}]$middle${line2}"
+    echo ${myprompt}
+}
+
+function __vcs_style_setup {
+    prompt_opts=(cr percent subst)
+    zstyle ':prezto:module:editor:info:completing' format '%B%F{red}...%b%f'
+    #zstyle ':prezto:module:editor:info:keymap:primary' format ' %B%F{red}❯%F{yellow}❯%F{green}❯%b%f'
+    zstyle ':prezto:module:editor:info:keymap:primary' format ' %B%F{red}>%F{yellow}>%F{green}>%b%f'
+    zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format ' %F{red}♺%f'
+    zstyle ':prezto:module:editor:info:keymap:alternate' format ' %B%F{green}<%F{yellow}<%F{red}<%b%f'
+    zstyle ':prezto:module:vcs:info:action' format ':%B%F{yellow}%s%b%f'
+    zstyle ':prezto:module:vcs:info:added' format '%B%F{green}ᴬ%b%f'
+    zstyle ':prezto:module:vcs:info:ahead' format '%B%F{yellow}%A%b%f'
+    zstyle ':prezto:module:vcs:info:behind' format '%B%F{yellow}%B%b%f'
+    zstyle ':prezto:module:vcs:info:ahead_or_behind' format '%B%F{yellow}%Z%b%f'
+    zstyle ':prezto:module:vcs:info:branch' format ':%F{green}%b%f'
+    zstyle ':prezto:module:vcs:info:commit' format ':%F{green}%.7c%f'
+    zstyle ':prezto:module:vcs:info:deleted' format '%B%F{red}✘ %f%b%f%f'
+    zstyle ':prezto:module:vcs:info:modified' format '%F{red}ᴹ%f'
+    zstyle ':prezto:module:vcs:info:position' format ':%F{red}%p%f'
+    zstyle ':prezto:module:vcs:info:renamed' format '%B%F{cyan}ᴿ%b%f'
+    zstyle ':prezto:module:vcs:info:stashed' format ':%B%F{cyan}%S%b%f'
+    zstyle ':prezto:module:vcs:info:unmerged' format ' %B%F{yellow}═%b%f'
+    zstyle ':prezto:module:vcs:info:untracked' format '%F{white}ᵁ%f'
+    zstyle ':prezto:module:vcs:info:remote' format '=>%B%F{magenta}%R%b%f'
+    zstyle ':prezto:module:vcs:info:name' format '|%B%F{blue}%v%b%f'
+    zstyle ':prezto:module:git:info:clean' format '?'
+
+    zstyle ':prezto:module:vcs:info:keys' format \
+	'prompt' '%S%v${pvcs_info[status]:+(${pvcs_info[status]})}$(coalesce "%b%Z%R" "%p" "%c")%s' \
+    'rprompt' ''\
+    'status' '%a%d%m%r%U%u%C'
+}
+
+function prompt_prems_setup {
+    setopt LOCAL_OPTIONS
+    unsetopt XTRACE KSH_ARRAYS
+    prompt_opts=(cr percent subst)
+    NL=$'\n'
+
+    # Load required functions.
+    autoload -Uz add-zsh-hook
+
+    # Add hook for calling git-info before each command.
+    if [[ ${ZSH_VERSION} > 4.3.0 ]]; then
+	add-zsh-hook precmd prompt_prems_precmd
+	add-zsh-hook chpwd prompt_prems_chpwd
+    else
+	PROMPT="[$FG[046]%n${RST}:$FX[bold]$FG[240]%~${RST}$vcs_info_msg_0_] $NL$FG[046]%m%f %% "
+	return
+    fi
+
+    __vcs_style_setup
+
+    zstyle ':prems:module:vcs' run 'yes'
+    
+    #PROMPT='[${_prompt_prems_pwd}%f${pvcs_info:+${(e)pvcs_info[prompt]}}]'$NL'%F{yellow}%m%f%F{cyan}%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
+    PROMPT=$(prems_set_prompt)
+    # Define prompts.
+    #PROMPT='%F{yellow}%m%f%F{cyan}${_prompt_prems_pwd}%f${git_info:+${(e)git_info[prompt]}}%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
+    #PROMPT='[${_prompt_prems_pwd}%f${git_info:+${(e)git_info[prompt]}}]'$NL'%F{yellow}%m%f%F{cyan}%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
+    RPROMPT='${editor_info[overwrite]}%(?:: %F{red}[%?]%f)${VIM:+" %B%F{green}V%b%f"}${pvcs_info[rprompt]}'
+    SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
+
+    #RPROMPT='${editor_info[overwrite]}%(?:: %F{red}[%?]%f)${VIM:+" %B%F{green}V%b%f"}${git_info[rprompt]}'
+    PS2='%B%F{magenta}%_> %f'
+}
+
+prompt_prems_setup "$@"
+
