@@ -70,8 +70,8 @@ function prompt_steeef_setup {
   #   %S - path in the repository
   local branch_format="(${_prompt_steeef_colors[1]}%b%f%u%c)"
   local action_format="(${_prompt_steeef_colors[5]}%a%f)"
-  local unstaged_format="${_prompt_steeef_colors[2]}●%f"
-  local staged_format="${_prompt_steeef_colors[5]}●%f"
+  local unstaged_format="${_prompt_steeef_colors[2]} ●%f"
+  local staged_format="${_prompt_steeef_colors[5]} ●%f"
 
   # Set vcs_info parameters.
   zstyle ':vcs_info:*' enable bzr git hg svn
