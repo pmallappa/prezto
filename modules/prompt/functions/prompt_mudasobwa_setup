@@ -254,7 +254,7 @@ prompt_status() {
   [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}⚡"
   [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{cyan}%}⚙"
  
-  [[ -n "$symbols" ]] && prompt_segment black black "$symbols"
+  [[ -n "$symbols" ]] && prompt_rsegment black black "$symbols"
 }
  
 ### current time
@@ -267,7 +267,7 @@ prompt_time() {
 ### function added by digitalformula
 prompt_hostname() {
   hostname=`hostname`
-  prompt_segment green black "$hostname"
+  prompt_segment magenta black "$hostname"
 }
  
 ### current hostname for right prompt
@@ -298,19 +298,23 @@ build_prompt_old() {
 }
  
 build_prompt() {
+  local NL=$'\n'
   RETVAL=$?
-  prompt_status
-  prompt_time
+  #prompt_time
   prompt_dir
   prompt_git
+  prompt_segment black white $NL
+  prompt_hostname
   prompt_end
+
 }
  
 build_rprompt() {
   RETVAL=$?
   prompt_rbenv
-  prompt_rhostname
+  #prompt_rhostname
   prompt_rend
+  prompt_status
 }
  
 function prompt_mudasobwa_setup {
