@@ -168,6 +168,7 @@ zstyle ':prems:load' pmodule \
   'vcs' \
   'virtualbox' \
   'work' \
+  'prompt' \
 # 'tmux'
 
 ## Prompt

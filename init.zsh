@@ -2,6 +2,7 @@
 # Initializes Prezto.
 #
 # Authors:
+#   Prem Mallappa <prem.mallappa@gmail.com>
 #   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 
