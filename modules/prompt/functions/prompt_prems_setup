@@ -36,6 +36,13 @@ function prompt_prems_precmd {
 
 [[ -z "${RST}" ]] && RST="%{$reset_color%}"
 
+function __trim() {
+    local var=$@
+    var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
+    echo -n "$var"
+}
+
 function prems_set_prompt() {
     local NL=$'\n'
     local line1=""
@@ -88,25 +95,25 @@ function __vcs_style_setup {
     zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format ' %F{red}♺%f'
     zstyle ':prezto:module:editor:info:keymap:alternate' format ' %B%F{green}<%F{yellow}<%F{red}<%b%f'
     zstyle ':prezto:module:vcs:info:action' format ':%B%F{yellow}%s%b%f'
-    zstyle ':prezto:module:vcs:info:added' format '%B%F{green}ᴬ%b%f'
-    zstyle ':prezto:module:vcs:info:ahead' format '%B%F{yellow}%A%b%f'
-    zstyle ':prezto:module:vcs:info:behind' format '%B%F{yellow}%B%b%f'
+    zstyle ':prezto:module:vcs:info:added' format '%B%F{green}✚ %b%f'
+    zstyle ':prezto:module:vcs:info:ahead' format '%B%F{yellow}⬆ %A%b%f'
+    zstyle ':prezto:module:vcs:info:behind' format '%B%F{yellow}⬇ %B%b%f'
     zstyle ':prezto:module:vcs:info:ahead_or_behind' format '%B%F{yellow}%Z%b%f'
     zstyle ':prezto:module:vcs:info:branch' format ':%F{green}%b%f'
     zstyle ':prezto:module:vcs:info:commit' format ':%F{green}%.7c%f'
-    zstyle ':prezto:module:vcs:info:deleted' format '%B%F{red}✘ %f%b%f%f'
-    zstyle ':prezto:module:vcs:info:modified' format '%F{red}ᴹ%f'
+    zstyle ':prezto:module:vcs:info:deleted' format '%B%F{red}✘ %f%b'
+    zstyle ':prezto:module:vcs:info:modified' format '%B%F{red}✱ %b%f'
     zstyle ':prezto:module:vcs:info:position' format ':%F{red}%p%f'
-    zstyle ':prezto:module:vcs:info:renamed' format '%B%F{cyan}ᴿ%b%f'
+    zstyle ':prezto:module:vcs:info:renamed' format '%B%F{cyan}➜ %b%f'
     zstyle ':prezto:module:vcs:info:stashed' format ':%B%F{cyan}%S%b%f'
     zstyle ':prezto:module:vcs:info:unmerged' format ' %B%F{yellow}═%b%f'
-    zstyle ':prezto:module:vcs:info:untracked' format '%F{white}ᵁ%f'
+    zstyle ':prezto:module:vcs:info:untracked' format '%F{white}◼%f'
     zstyle ':prezto:module:vcs:info:remote' format '=>%B%F{magenta}%R%b%f'
     zstyle ':prezto:module:vcs:info:name' format '|%B%F{blue}%v%b%f'
     zstyle ':prezto:module:git:info:clean' format '?'
 
     zstyle ':prezto:module:vcs:info:keys' format \
-	'prompt' '%S%v${pvcs_info[status]:+(${pvcs_info[status]})}$(coalesce "%b%Z%R" "%p" "%c")%s' \
+	'prompt' '%S%v${pvcs_info[status]:+(${pvcs_info[status]// $/})}$(coalesce "%b%Z%R" "%p" "%c")%s' \
     'rprompt' ''\
     'status' '%a%d%m%r%U%u%C'
 }
