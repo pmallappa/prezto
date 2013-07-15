@@ -47,23 +47,17 @@ function prompt_host() {
 
     case $HOST in
 	pmallappa-server)
-            hostcolor="%F{blue}%m%f"
-            ;;
+        hostcolor="%F{blue}%m%f" ;;
 	pmallappa-laptop)
-            hostcolor="%B%F{green}%m%b%f"
-            ;;
+        hostcolor="%B%F{green}%m%b%f" ;;
 	pmallappa-test)
-            hostcolor="%F{cyan}%m%f"
-            ;;
+        hostcolor="%F{cyan}%m%f"  ;;
 	imac* | iMac*)
-	    hostcolor="%F{magenta}%m%f"
-	    ;;
+	    hostcolor="%F{magenta}%m%f" ;;
 	*-vm)
-            hostcolor="%F{white}%m%f"
-            ;;
+        hostcolor="%F{white}%m%f"  ;;
 	*)
-            hostcolor="%F{gray}%m%f"
-            ;;
+        hostcolor="%F{gray}%m%f"  ;;
     esac
 
     echo ${hostcolor}
@@ -340,8 +334,8 @@ function prompt_prems_setup {
 
     #PROMPT='[${_prompt_prems_pwd}%f${pvcs_info:+${(e)pvcs_info[prompt]}}]'$NL'%F{yellow}%m%f%F{cyan}%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
     PROMPT='
-${_prompt_pwd}${__build_prompt} ${vcs_info_msg_0_}
-${editor_info[keymap]} '
+$(__build_prompt)${vcs_info_msg_0_}
+${hostcolor}${editor_info[keymap]} '
     # Define prompts.
     #RPROMPT='${editor_info[overwrite]}%(?:: %F{red}[%?]%f)${VIM:+" %B%F{green}V%b%f"}${pvcs_info[rprompt]}'
     RPROMPT=''
