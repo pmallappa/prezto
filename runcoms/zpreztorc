@@ -41,6 +41,7 @@ zstyle ':prezto:load' pmodule \
   'tmux' \
   'ruby' \
   'prompt' \
+  'git' \
 #  'syntax-highlighting' \
 #  'history-substring-search' \
 
@@ -165,11 +166,9 @@ zstyle ':prems:load' pmodule \
   'freebsd' \
   'osx' \
   'linux' \
-  'vcs' \
   'virtualbox' \
   'work' \
-  'prompt' \
-# 'tmux'
+  #'vcs' \
 
 ## Prompt
 #zstyle ':prems:module:prompt' theme 'prems'
@@ -191,9 +190,10 @@ zstyle ':prems:module:tmux:session:home'  window_list \
   'Blog'   \
 
 ## VCS, directly passed to vcs_info enable, disable
-zstyle ':prems:module:vcs' disabled 'all'
-zstyle ':prems:module:vcs' enabled \
+zstyle ':prezto:module:vcs' disabled 'all'
+zstyle ':prezto:module:vcs' enabled \
     'git' \
     'hg' \
     'svn' \
     'bzr'
+

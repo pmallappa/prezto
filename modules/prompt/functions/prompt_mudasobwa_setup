@@ -267,7 +267,7 @@ prompt_time() {
 ### function added by digitalformula
 prompt_hostname() {
   hostname=`hostname`
-  prompt_segment magenta black "$hostname"
+  prompt_segment black 208 "$hostname"
 }
  
 ### current hostname for right prompt
@@ -303,7 +303,6 @@ build_prompt() {
   #prompt_time
   prompt_dir
   prompt_git
-  prompt_segment black white $NL
   prompt_hostname
   prompt_end
 

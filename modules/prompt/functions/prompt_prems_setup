@@ -2,39 +2,38 @@
 # Load dependencies.
 pmodload 'helper'
 
-function prompt_prems_pwd {
-  local pwd="${PWD/#$HOME/~}"
-  _prompt_prems_pwd="%~"
-  #if [[ "$pwd" == (#m)[/~] ]]; then
-  #  _prompt_prems_pwd="$MATCH"
-  #  unset MATCH
-  #else
-  #  _prompt_prems_pwd="${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}/${pwd:t}"
-  #fi
+function _prompt_prems_pwd {
+    local pwd="${PWD/#$HOME/~}"
+    _prompt_pwd="%~"
+    #if [[ "$pwd" == (#m)[/~] ]]; then
+    #  _prompt_prems_pwd="$MATCH"
+    #  unset MATCH
+    #else
+    #  _prompt_prems_pwd="${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}/${pwd:t}"
+    #fi
 }
 
 # Must run vcs_info when changing directories.
-prompt_prems_chpwd() {
+function _prompt_prems_chpwd() {
     zstyle ':prems:module:vcs' run 'yes'
-    unset pvcs_info
-    #vcs_info
+    vcs_info
 }
 
-function prompt_prems_precmd {
-  setopt LOCAL_OPTIONS
-  unsetopt XTRACE KSH_ARRAYS
+function _prompt_prems_precmd {
+    setopt LOCAL_OPTIONS
+    unsetopt XTRACE KSH_ARRAYS
 
-  # Format PWD.
-  prompt_prems_pwd
+    # Format PWD.
+    _prompt_prems_pwd
 
-  # Get Git repository information.
-  #if (( $+functions[vcs_info] )); then
-  #zstyle ':prems:module:vcs' run 'yes'
-  vcs_info
-  #fi
+    # Get Git repository information.
+    #if (( $+functions[vcs_info] )); then
+    #zstyle ':prems:module:vcs' run 'yes'
+    vcs_info
+    #fi
 }
 
-[[ -z "${RST}" ]] && RST="%{$reset_color%}"
+set -x
 
 function __trim() {
     local var=$@
@@ -43,11 +42,7 @@ function __trim() {
     echo -n "$var"
 }
 
-function prems_set_prompt() {
-    local NL=$'\n'
-    local line1=""
-    local line2=""
-    local screenwidth=$((1 * ${COLUMNS} - 1))  # promptsz contains length including color control
+function prompt_host() {
     local hostcolor
 
     case $HOST in
@@ -71,80 +66,286 @@ function prems_set_prompt() {
             ;;
     esac
 
-    line1='${_prompt_prems_pwd}${pvcs_info:+${(e)pvcs_info[prompt]}}'
-    line2="$hostcolor"'%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
+    echo ${hostcolor}
+}
+
+zstyle ':vcs_info:git*+set-message:*' hooks __prompt_git
+function +vi-__prompt_git() {
+    local action
+    local action_format
+    local action_formatted
+    local added=0
+    local added_format
+    local added_formatted
+    local ahead=0
+    local ahead_and_behind
+    local ahead_and_behind_cmd
+    local ahead_format
+    local ahead_formatted
+    local ahead_or_behind
+    local behind=0
+    local behind_format
+    local behind_formatted
+    local branch
+    local branch_format
+    local branch_formatted
+    local branch_info
+    local clean
+    local clean_formatted
+    local commit
+    local commit_format
+    local commit_formatted
+    local deleted=0
+    local deleted_format
+    local deleted_formatted
+    local dirty=0
+    local dirty_format
+    local dirty_formatted
+    local ignore_submodules
+    local indexed=0
+    local indexed_format
+    local indexed_formatted
+    local -A info_formats
+    local info_format
+    local modified=0
+    local modified_format
+    local modified_formatted
+    local position
+    local position_format
+    local position_formatted
+    local remote
+    local remote_cmd
+    local remote_format
+    local remote_formatted
+    local renamed=0
+    local renamed_format
+    local renamed_formatted
+    local stashed=0
+    local stashed_format
+    local stashed_formatted
+    local status_cmd
+    local status_mode
+    local unindexed=0
+    local unindexed_format
+    local unindexed_formatted
+    local unmerged=0
+    local unmerged_format
+    local unmerged_formatted
+    local untracked=0
+    local untracked_format
+    local untracked_formatted
+
+
+    # Format remote.
+    zstyle -s ':prezto:module:git:info:remote' format 'remote_format'
+    if [[ -n "$branch" && -n "$remote_format" ]]; then
+	# Gets the remote name.
+	remote_cmd='git rev-parse --symbolic-full-name --verify HEAD@{upstream}'
+	remote="${$(${(z)remote_cmd} 2> /dev/null)##refs/remotes/}"
+	if [[ -n "$remote" ]]; then
+	    zformat -f remote_formatted "$remote_format" "R:$remote"
+	fi
+    fi
+
+    # Use porcelain status for easy parsing.
+    status_cmd="git status --porcelain --ignore-submodules=${ignore_submodules:-none}"
+    # Get current status.
+    while IFS=$'\n' read line; do
+	# Count added, deleted, modified, renamed, unmerged, untracked, dirty.
+	# T (type change) is undocumented, see http://git.io/FnpMGw.
+	# For a table of scenarii, see http://i.imgur.com/2YLu1.png.
+	[[ "$line" == ([ACDMT][\ MT]|[ACMT]D)\ * ]] && (( added++ ))
+	[[ "$line" == [\ ACMRT]D\ * ]] && (( deleted++ ))
+	[[ "$line" == ?[MT]\ * ]] && (( modified++ ))
+	[[ "$line" == R?\ * ]] && (( renamed++ ))
+	[[ "$line" == (AA|DD|U?|?U)\ * ]] && (( unmerged++ ))
+	[[ "$line" == \?\?\ * ]] && (( untracked++ ))
+	(( dirty++ ))
+    done < <(${(z)status_cmd} 2> /dev/null)
+
+    # Format added.
+    if (( added > 0 )); then
+	zstyle -s ':prezto:module:git:info:added' format 'added_format'
+	zformat -f added_formatted "$added_format" "a:$added_format"
+    fi
+
+    # Format deleted.
+    if (( deleted > 0 )); then
+	zstyle -s ':prezto:module:git:info:deleted' format 'deleted_format'
+	zformat -f deleted_formatted "$deleted_format" "d:$deleted_format"
+    fi
+
+    # Format modified.
+    if (( modified > 0 )); then
+	zstyle -s ':prezto:module:git:info:modified' format 'modified_format'
+	zformat -f modified_formatted "$modified_format" "m:$modified"
+    fi
+
+    # Format renamed.
+    if (( renamed > 0 )); then
+	zstyle -s ':prezto:module:git:info:renamed' format 'renamed_format'
+	zformat -f renamed_formatted "$renamed_format" "r:$renamed"
+    fi
+
+    # Format unmerged.
+    if (( unmerged > 0 )); then
+	zstyle -s ':prezto:module:git:info:unmerged' format 'unmerged_format'
+	zformat -f unmerged_formatted "$unmerged_format" "U:$unmerged"
+    fi
+
+    # Format untracked.
+    if (( untracked > 0 )); then
+	zstyle -s ':prezto:module:git:info:untracked' format 'untracked_format'
+	zformat -f untracked_formatted "$untracked_format" "u:$untracked"
+    fi
+
+    # Format dirty and clean.
+    if (( dirty > 0 )); then
+	zstyle -s ':prezto:module:git:info:dirty' format 'dirty_format'
+	zformat -f dirty_formatted "$dirty_format" "D:$dirty"
+    else
+	zstyle -s ':prezto:module:git:info:clean' format 'clean_formatted'
+    fi
+
+    for info_format in ${(k)info_formats}; do
+	zformat -f REP "$info_formats[$info_format]" \
+	    "b:$branch_formatted" \
+	    "R:$remote_formatted"
+	hook_com[branch]="$REP"
+    done
+
+    # Format info.
+    zstyle -a ':prezto:module:git:info:keys' format 'info_formats'
+    for info_format in ${(k)info_formats}; do
+	zformat -f REPLY "$info_formats[$info_format]" \
+	    "a:$added_formatted" \
+	    "A:$ahead_formatted" \
+	    "B:$behind_formatted" \
+	    "C:$clean_formatted" \
+	    "c:$commit_formatted" \
+	    "d:$deleted_formatted" \
+	    "D:$dirty_formatted" \
+	    "i:$indexed_formatted" \
+	    "I:$unindexed_formatted" \
+	    "m:$modified_formatted" \
+	    "p:$position_formatted" \
+	    "r:$renamed_formatted" \
+	    "s:$action_formatted" \
+	    "S:$stashed_formatted" \
+	    "U:$unmerged_formatted" \
+	    "u:$untracked_formatted"
+	hook_com[misc]="$REPLY"
+    done
+
+
+}
+
+function __prompt_vcs() {
+}
+
+function __build_prompt() {
+    set -x
+    local NL=$'\n'
+    local screenwidth=$((1 * ${COLUMNS} - 1))  # promptsz contains length including color control
+
+    line1="${_prompt_pwd}"
+    line2=$prompt_host'%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
     #local tmpps1="${line1}${line2}"
     #local zero='%([BSUbfksu]|([FB]|){*})'
     #local promptsz=${#${(S%%)tmpps1//$~zero/}}
     #tmpps1=
     #promptsz=
     if [[ $promptsz -gt $screenwidth ]]; then
-       middle="$NL"
+	middle="$NL"
     else
         middle="$NL"
     fi
-    myprompt="[${line1}]$middle${line2}"
+#    myprompt="
+#[${line1}]${line2}"
+    myprompt=${line1}
+
     echo ${myprompt}
 }
 
-function __vcs_style_setup {
+function __setup_vcs_style {
+
+    zstyle ':vcs_info:*' formats ' %F{005}%s%f: %b%m'
+    zstyle ':vcs_info:*' actionformats ' {|%s%f%c: %b|%B%F{008}%a%f%b}'
+
+
     prompt_opts=(cr percent subst)
     zstyle ':prezto:module:editor:info:completing' format '%B%F{red}...%b%f'
-    #zstyle ':prezto:module:editor:info:keymap:primary' format ' %B%F{red}❯%F{yellow}❯%F{green}❯%b%f'
     zstyle ':prezto:module:editor:info:keymap:primary' format ' %B%F{red}>%F{yellow}>%F{green}>%b%f'
     zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format ' %F{red}♺%f'
     zstyle ':prezto:module:editor:info:keymap:alternate' format ' %B%F{green}<%F{yellow}<%F{red}<%b%f'
-    zstyle ':prezto:module:vcs:info:action' format ':%B%F{yellow}%s%b%f'
-    zstyle ':prezto:module:vcs:info:added' format '%B%F{green}✚ %b%f'
-    zstyle ':prezto:module:vcs:info:ahead' format '%B%F{yellow}⬆ %A%b%f'
-    zstyle ':prezto:module:vcs:info:behind' format '%B%F{yellow}⬇ %B%b%f'
-    zstyle ':prezto:module:vcs:info:ahead_or_behind' format '%B%F{yellow}%Z%b%f'
-    zstyle ':prezto:module:vcs:info:branch' format ':%F{green}%b%f'
-    zstyle ':prezto:module:vcs:info:commit' format ':%F{green}%.7c%f'
-    zstyle ':prezto:module:vcs:info:deleted' format '%B%F{red}✘ %f%b'
-    zstyle ':prezto:module:vcs:info:modified' format '%B%F{red}✱ %b%f'
-    zstyle ':prezto:module:vcs:info:position' format ':%F{red}%p%f'
-    zstyle ':prezto:module:vcs:info:renamed' format '%B%F{cyan}➜ %b%f'
-    zstyle ':prezto:module:vcs:info:stashed' format ':%B%F{cyan}%S%b%f'
-    zstyle ':prezto:module:vcs:info:unmerged' format ' %B%F{yellow}═%b%f'
-    zstyle ':prezto:module:vcs:info:untracked' format '%F{white}◼%f'
-    zstyle ':prezto:module:vcs:info:remote' format '=>%B%F{magenta}%R%b%f'
-    zstyle ':prezto:module:vcs:info:name' format '|%B%F{blue}%v%b%f'
+    zstyle ':prezto:module:git:info:action' format ':%B%F{yellow}%s%b%f'
+    zstyle ':prezto:module:git:info:added' format '%B%F{green} ✚%b%f'
+    zstyle ':prezto:module:git:info:ahead' format '%B%F{yellow} ⬆%A%b%f'
+    zstyle ':prezto:module:git:info:behind' format '%B%F{yellow} ⬇%B%b%f'
+    zstyle ':prezto:module:git:info:ahead_or_behind' format '%B%F{yellow}%Z%b%f'
+    zstyle ':prezto:module:git:info:branch' format ':%F{green}%b%f'
+    zstyle ':prezto:module:git:info:commit' format ':%F{green}%.7c%f'
+    zstyle ':prezto:module:git:info:deleted' format '%B%F{red} ✘%f%b'
+    zstyle ':prezto:module:git:info:modified' format '%B%F{red} ✱%b%f'
+    zstyle ':prezto:module:git:info:position' format ':%F{red}%p%f'
+    zstyle ':prezto:module:git:info:renamed' format '%B%F{cyan} ➜%b%f'
+    zstyle ':prezto:module:git:info:stashed' format ':%B%F{cyan}%S%b%f'
+    zstyle ':prezto:module:git:info:unmerged' format ' %B%F{yellow}═%b%f'
+    zstyle ':prezto:module:git:info:untracked' format '%F{white} ◼%f'
+    zstyle ':prezto:module:git:info:remote' format '=>%B%F{magenta}%R%b%f'
+    zstyle ':prezto:module:git:info:name' format '|%B%F{blue}%v%b%f'
     zstyle ':prezto:module:git:info:clean' format '?'
 
-    zstyle ':prezto:module:vcs:info:keys' format \
-    'prompt' '%S%v$(coalesce "%b%Z%R" "%p" "%c")%s' \
-    'rprompt' '%a%d%m%r%U%u%C'\
-    'status' '%a%d%m%r%U%u%C'
-#	'prompt' '%S%v${pvcs_info[status]:+(${pvcs_info[status]// $/})}$(coalesce "%b%Z%R" "%p" "%c")%s' \
+    #zstyle ':prezto:module:git:info:keys' format \
+    #'prompt' '%S%v%b' \
+    #'rprompt' '%a%d%m%r%U%u%C'\
+    #'status' '%a%d%m%r%U%u%C'
+    #	'prompt' '%S%v${pvcs_info[status]:+(${pvcs_info[status]// $/})}$(coalesce "%b%Z%R" "%p" "%c")%s' \
+}
+
+function __setup_vcs {
+    local enabled
+    local disabled
+    zstyle -a ':prezto:module:vcs' enabled 'enabled'
+    zstyle -a ':prezto:module:vcs' disabled 'disabled'
+
+    zstyle ':vcs_info:*' disable $disabled
+    zstyle ':vcs_info:*' enable $enabled
+
 }
 
 function prompt_prems_setup {
+    autoload -Uz vcs_info
+
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
     prompt_opts=(cr percent subst)
     NL=$'\n'
+
+    __setup_vcs
+    __setup_vcs_style
 
     # Load required functions.
     autoload -Uz add-zsh-hook
 
     # Add hook for calling git-info before each command.
     if [[ ${ZSH_VERSION} > 4.3.0 ]]; then
-	add-zsh-hook precmd prompt_prems_precmd
-	add-zsh-hook chpwd prompt_prems_chpwd
+	add-zsh-hook precmd _prompt_prems_precmd
+	add-zsh-hook chpwd _prompt_prems_chpwd
     else
 	PROMPT="[$FG[046]%n${RST}:$FX[bold]$FG[240]%~${RST}$vcs_info_msg_0_] $NL$FG[046]%m%f %% "
 	return
     fi
 
-    __vcs_style_setup
 
-    zstyle ':prems:module:vcs' run 'yes'
-    
     #PROMPT='[${_prompt_prems_pwd}%f${pvcs_info:+${(e)pvcs_info[prompt]}}]'$NL'%F{yellow}%m%f%F{cyan}%(!. %B%F{red}#%b%f.)${editor_info[keymap]} '
-    PROMPT=$(prems_set_prompt)
+    PROMPT='
+${_prompt_pwd}${__build_prompt} ${vcs_info_msg_0_}
+${editor_info[keymap]} '
     # Define prompts.
-    RPROMPT='${editor_info[overwrite]}%(?:: %F{red}[%?]%f)${VIM:+" %B%F{green}V%b%f"}${pvcs_info[rprompt]}'
+    #RPROMPT='${editor_info[overwrite]}%(?:: %F{red}[%?]%f)${VIM:+" %B%F{green}V%b%f"}${pvcs_info[rprompt]}'
+    RPROMPT=''
+    
     SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
 
     PS2='%B%F{magenta}%_> %f'

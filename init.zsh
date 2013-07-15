@@ -25,11 +25,11 @@ env_append() { env_remove $1 $2 && export $1="`printenv $1`:$2"; }
 env_prepend () { env_remove $1 $2 && export $1="$2:`printenv $1`"; }
 
 ## env_remove PATH ~/bin
-env_remove ()  { 
-    if [[ "X$1" == "X" ]]; then
-        "Please provide a Environment to remove"
-        return
-    fi
+env_remove ()  {
+    [[ "X$1" == "X" ]] && return
+
+    [[ "X$2" == "X" ]] && return
+
     export $1=`printenv $1 | awk -v RS=: -v ORS=: '$0 != "'$2'"' | sed 's/:$//'`;
 }
 path_append ()  { env_append PATH $1; }
@@ -141,8 +141,14 @@ unset pmodules
 #set -x
 # Load Prems modules, override anything that is not needed
 zstyle -a ':prems:load' pmodule 'pmodules'
-ZMODDIR="${ZDOTDIR:-$HOME}/.zprezto/prem_modules"
+ZMODDIR="${ZDOTDIR:-$HOME/.zprezto}/prem_modules"
 pmodload "$pmodules[@]"
 unset pmodules
 unset ZMODDIR
+
+function {
+    fpath=(${ZDOTDIR:-${HOME}/".zprezto"}/functions(/FN) $fpath)
+    autoload -U ${fpath[1]}/*(:t)
+}
+
 

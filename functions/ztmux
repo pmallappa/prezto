@@ -1,5 +1,5 @@
 [ ! -z "${TMUX}" ] && echo "Running inside TMUX" && return 1
-if ! zstyle -t ':prems:module:tmux' loaded ; then
+if ! zstyle -t ':prezto:module:tmux' loaded ; then
     echo "Tmux not loaded"
     return 0
 fi
