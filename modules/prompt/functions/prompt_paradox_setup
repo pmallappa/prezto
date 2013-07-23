@@ -111,8 +111,8 @@ function prompt_paradox_setup {
     'status' ' %A%B%S%a%d%m%r%U%u'
 
   # Define prompts.
-  PROMPT='%{%f%b%k %}$(build_prompt)
- ${editor_info[keymap]} '
+  PROMPT='%{%f%b%k%}$(build_prompt) 
+${editor_info[keymap]} '
   RPROMPT='[%D{%L:%M:%S %p}]'
   SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
 }

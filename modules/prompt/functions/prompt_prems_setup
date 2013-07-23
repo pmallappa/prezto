@@ -1,19 +1,37 @@
 ## Setup usual git info
 zstyle ':vcs_info:git*+set-message:*' hooks __prompt_git
 function +vi-__prompt_git() {
-    git-info
-    hook_com[misc]=$git_info[misc]
-    hook_com[branch]=$git_info[branch]
+    if (( $+functions[git-info] )); then
+	git-info
+	# if [ -n $git_info[misc] ]; then
+	#     #git_info[misc]=$(___trim $git_info[misc])
+	#     hook_com[misc]="($git_info[misc])"
+	# fi
+	#hook_com[branch]=$git_info[branchremote]
+    fi
 }
 
-function prompt_dir {
-}
+# function ___trim() {
+#     local var=$@
+#     var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
+#     var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
+#     echo -n "$var"
+# }
 
-function prompt_git {
-    echo ${vcs_info_msg_0_}
-}
-
-function prompt_host {
+# Begin a segment
+# Takes two arguments, background and foreground. Both can be omitted,
+# rendering default background/foreground.
+function prompt_segment() {
+    local bg fg
+    [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
+    [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
+    if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
+	echo -n " %{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
+    else
+	echo -n "%{$bg%}%{$fg%} "
+    fi
+    CURRENT_BG=$1
+    [[ -n $3 ]] && echo -n $3
 }
 
 function prompt_end {
@@ -26,6 +44,80 @@ function prompt_end {
     CURRENT_BG=''
 }
 
+# Begin an right segment
+# Takes two arguments, background and foreground. Both can be omitted,
+# rendering default background/foreground.
+function prompt_rsegment() {
+  local bg fg
+  [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
+  [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
+  if [[ $1 != $CURRENT_BG ]]; then
+    echo -n "%{%F{$1}%}$SEGMENT_RSEPARATOR%{$bg%}%{$fg%}"
+  else
+    echo -n "%{$bg%}%{$fg%}"
+  fi
+  CURRENT_BG=$1
+  [[ -n $3 ]] && echo -n $3
+}
+
+# End the rprompt, closing any open segments
+function prompt_rend() {
+  if [[ -n $CURRENT_BG ]]; then
+    echo -n "%{%k%F{$CURRENT_BG}%}"
+  else
+    echo -n "%{%k%}"
+  fi
+  echo -n "%{%f%}"
+  CURRENT_BG=''
+}
+
+function prompt_dir {
+    prompt_segment blue black "%~"
+}
+
+function prompt_git {
+    local br=$git_info[branch]
+    # Here we detect if we are in a git repo
+    if [[ -n $br ]]; then
+	local ref dirty
+	#prompt_rsegment blue black " git "
+	if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+	    #dirty=$(parse_git_dirty)
+	    dirty=$git_info[status]
+	    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
+	    prompt_rsegment magenta black "⭠ $git_info[branch] "
+	    prompt_rsegment white black " $git_info[remote] "
+	   if [[ -z $dirty ]]; then
+	       prompt_rsegment green black " ✔ "
+	   else
+	       prompt_rsegment red black "$git_info[status] "
+	   fi
+	fi
+    fi
+}
+
+function prompt_host {
+    local hostcolor
+    bg=black
+    case $HOST in
+	pmallappa-server)
+            fg=yello;;
+	pmallappa-laptop)
+	    fg=green;;
+	pmallappa-test)
+            fg=cyan;;
+	imac* | iMac*)
+	    fg=magenta ;;
+	*-vm)
+            fg=$(($RANDOM%256)) ;;
+	*)
+            fg=gray  ;;
+    esac
+    CURRENT_BG=$fg
+    echo -n $(prompt_segment $fg $bg $(hostname))
+}
+
+
 function prompt_status() {
     local symbols
     symbols=()
@@ -36,21 +128,44 @@ function prompt_status() {
     [[ -n "$symbols" ]] && prompt_rsegment black black "$symbols"
 }
 
-function build_prompt {
-    RETVAL=$?
-    prompt_dir
-    prompt_git
-    prompt_hostname
-    prompt_end
+function prompt_padding {
+    local prompt_line_1a
+    local prompt_line_1b
+    local zero='%([BSUbfksu]|([FB]|){*})'
+    prompt_line_1a=$(prompt_host)$(prompt_dir)
+    prompt_line_1a+=$(prompt_end)
+
+    prompt_line_1b=$(prompt_git)
+    prompt_line_1b+=$(prompt_rend)
+
+  local prompt_line_1a_width=${#${(S%%)prompt_line_1a//$~zero}}
+  local prompt_line_1b_width=${#${(S%%)prompt_line_1b//$~zero}}
+  local prompt_padding_size=$(( COLUMNS
+                                  - prompt_line_1a_width
+                                  - prompt_line_1b_width - 2 ))
+  # Try to fit in long path and user@host.
+  if (( prompt_padding_size > 0 )); then
+      local prompt_padding
+      prompt_padding=${(l:${prompt_padding_size}:: :)_empty_zz}
+      echo -n "$prompt_padding"
+  fi
 }
 
-function prompt_rend {
+function build_prompt {
+    RETVAL=$?
+    prompt_host
+    prompt_dir
+    prompt_end
+    prompt_padding
+    prompt_git
+    prompt_rend
 }
 
 function build_rprompt {
     RETVAL=$?
-    prompt_rend
+    #prompt_git
     prompt_status
+    prompt_rend
 }
 
 # Must run vcs_info when changing directories.
@@ -89,48 +204,63 @@ function __setup_vcs {
 }
 
 function __setup_vcs_style {
-    zstyle ':vcs_info:*' formats ' %F{005}%s%f: %b%m'
-    zstyle ':vcs_info:*' actionformats ' {|%s%f%c: %b|%B%F{008}%a%f%b}'
+    zstyle ':vcs_info:git*' formats '%b'
+    zstyle ':vcs_info:(hg*|git*):*' get-revision true
+    zstyle ':vcs_info:*' actionformats '{|%s%f%c: %b|%a}'
 
     # This includes git-svn, hg-svn, hg-git etc
     zstyle ':vcs_info:(hg*|git*):*' get-revision true
     zstyle ':vcs_info:(hg*|git*):*' check-for-changes true
 
     ### for Mercurial
-    # rev+changes branch misc
-    zstyle ':vcs_info:hg*' formats "(%s)[%i%u %b %m]"
-    zstyle ':vcs_info:hg*' actionformats "(%s|%a)[%i%u %b %m]"
-    zstyle ':vcs_info:hg*:netbeans' use-simple true
-    zstyle ':vcs_info:hg*:*' get-bookmarks true
-    zstyle ':vcs_info:hg*:*' get-mq true
-    zstyle ':vcs_info:hg*:*' get-unapplied true
-    zstyle ':vcs_info:hg*:*' patch-format "mq(%g):%n/%c %p"
-    zstyle ':vcs_info:hg*:*' nopatch-format "mq(%g):%n/%c %p"
-    zstyle ':vcs_info:hg*:*' unstagedstr "+"
-    zstyle ':vcs_info:hg*:*' hgrevformat "%r" # only show local rev.
-    zstyle ':vcs_info:hg*:*' branchformat "%b" # only show branch
+    () {
+	# rev+changes branch misc
+	zstyle ':vcs_info:hg*' formats "(%s)[%i%u %b %m]"
+	zstyle ':vcs_info:hg*' actionformats "(%s|%a)[%i%u %b %m]"
+	zstyle ':vcs_info:hg*:netbeans' use-simple true
+	zstyle ':vcs_info:hg*:*' get-bookmarks true
+	zstyle ':vcs_info:hg*:*' get-mq true
+	zstyle ':vcs_info:hg*:*' get-unapplied true
+	zstyle ':vcs_info:hg*:*' patch-format "mq(%g):%n/%c %p"
+	zstyle ':vcs_info:hg*:*' nopatch-format "mq(%g):%n/%c %p"
+	zstyle ':vcs_info:hg*:*' unstagedstr "+"
+	zstyle ':vcs_info:hg*:*' hgrevformat "%r" # only show local rev.
+	zstyle ':vcs_info:hg*:*' branchformat "%b" # only show branch
+    }
+    
+    ### Mark individual style
+    () {
+	zstyle ':prezto:module:git:info' verbose 'yes'
 
-    zstyle ':prezto:module:git:info:action' format ':%B%F{yellow}%s%f%b'
-    zstyle ':prezto:module:git:info:added' format  '%B%F{green}✚%f%b'
-    zstyle ':prezto:module:git:info:ahead' format  '%B%F{yellow}⬆%f%b'
-    zstyle ':prezto:module:git:info:behind' format  '%B%F{yellow}⬇%f%b'
-    zstyle ':prezto:module:git:info:branch' format ':%F{green}%b%f'
-    zstyle ':prezto:module:git:info:remote' format '=>%B%F{magenta}%R%b%f'
-    zstyle ':prezto:module:git:info:commit' format ':%F{green}%.7c%f'
-    zstyle ':prezto:module:git:info:deleted' format  '%B%F{red}✖%f%b'
-    zstyle ':prezto:module:git:info:modified' format  '%B%F{blue}✱%f%b'
-    zstyle ':prezto:module:git:info:position' format ':%F{green}%p%f'
-    zstyle ':prezto:module:git:info:renamed' format  '%B%F{magenta}➜%f%b'
-    zstyle ':prezto:module:git:info:stashed' format  '%B%F{cyan}✭%f%b'
-    zstyle ':prezto:module:git:info:unmerged' format  '%B%F{yellow}═%f%b'
-    zstyle ':prezto:module:git:info:untracked' format  '%B%F{white}◼%f%b'
+	zstyle ':prezto:module:git:info:action' format ':%s'
+	zstyle ':prezto:module:git:info:added' format  '✚'
+	zstyle ':prezto:module:git:info:ahead' format  '⬆'
+	zstyle ':prezto:module:git:info:behind' format  '⬇'
+	zstyle ':prezto:module:git:info:branch' format '%b'
+	zstyle ':prezto:module:git:info:remote' format '%R'
+	zstyle ':prezto:module:git:info:commit' format ':%.7c'
+	zstyle ':prezto:module:git:info:deleted' format  ' ✖'
+	zstyle ':prezto:module:git:info:modified' format  ' ✱'
+	zstyle ':prezto:module:git:info:position' format ':%p'
+	zstyle ':prezto:module:git:info:renamed' format  ' ➜'
+	zstyle ':prezto:module:git:info:stashed' format  ' ✭'
+	zstyle ':prezto:module:git:info:unmerged' format  ' ═'
+	zstyle ':prezto:module:git:info:untracked' format  
 
-    zstyle ':prezto:module:git:info:keys' format \
-	'branch'  '%b%R' \
-	'misc' '%A%B%S%a%d%m%r%U%u'
+	zstyle ':prezto:module:git:info:keys' format \
+	    'added'     '%a' \
+	    'deleted'   '%d' \
+	    'modified'  '%m' \
+	    'renamed'   '%r' \
+	    'untracked' '%u' \
+	    'branch'    '%b' \
+	    'remote'    '%R' \
+	    'status'      '%S%A%B%U%I%C%a%d%m%r%u'
+    }
 }
 
 function prompt_prems_setup {
+    local NL=$'\n'
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
     prompt_opts=(cr percent subst)
@@ -155,12 +285,12 @@ function prompt_prems_setup {
     SEGMENT_SEPARATOR='⮀'
     SEGMENT_RSEPARATOR='⮂'
     
-    PROMPT='%{%f%b%k%}$(build_prompt) '
+    PROMPT='%{%f%b%k%}$(build_prompt)$NL>>> '
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 
     ## remove all that one-time definitions
-    unfunction __setup_vcs
-    unfunction __setup_vcs_style
+    #unfunction __setup_vcs
+    #unfunction __setup_vcs_style
 }
 
 prompt_prems_setup "$@"
