@@ -2,20 +2,23 @@
 # Send command to all windows in a session
 ##
 local -a sessions
+local s
 sessions=(${(@)$(tmux list-sessions -F '#S')})
-
-set -x
+curses=$(tmux display-message -p "#S")
 
 if (( ${#sessions} > 1 )); then
     local s=$sessions[1]
-
-
-    
-	print -l "${sessions[@]} ${#sessions}"
-	echo -n "Select a sessoin [$sessions]:"
-	read s
+    print -l "${sessions[@]} ${#sessions}"
+    echo -n "Select a session ($sessions)[$curses]:"
+    read s
 fi
-set +x
+
+if [ "X$s" == "X" ]; then
+   if [ "X$curses" == "X" ]; then
+	echo "Not running inside TMUX, You must select a session" && return
+   fi
+   s=$curses
+fi
 
 for window in `tmux list-windows -F '#I'`; do
     for pane in `tmux list-panes -t $s:$window -F '#P'`; do
