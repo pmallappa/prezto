@@ -1,3 +1,10 @@
+##
+## Authour: Prem Mallappa <prem.mallappa@gmail.com
+##
+# Heavily derived from agnoster/mudasobwa/
+# Credits to original authors.
+#
+#
 ## Setup usual git info
 zstyle ':vcs_info:git*+set-message:*' hooks __prompt_git
 function +vi-__prompt_git() {
