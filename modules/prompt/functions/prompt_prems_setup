@@ -279,6 +279,8 @@ function prompt_prems_setup {
     autoload -Uz add-zsh-hook
     autoload -Uz vcs_info    
 
+    zstyle ':prezto:module:editor:info:keymap:primary' format "%F{red}⊳%F{yellow}⊳%F{green}⊳%f "
+
     # Add hook for calling git-info before each command.
     if [[ ${ZSH_VERSION} > 4.3.0 ]]; then
 	add-zsh-hook precmd _prompt_prems_precmd
@@ -292,7 +294,7 @@ function prompt_prems_setup {
     SEGMENT_SEPARATOR='⮀'
     SEGMENT_RSEPARATOR='⮂'
     
-    PROMPT='%{%f%b%k%}$(build_prompt)$NL>>> '
+    PROMPT='%{%f%b%k%}$(build_prompt)$NL${editor_info[keymap]} '
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 
     ## remove all that one-time definitions
