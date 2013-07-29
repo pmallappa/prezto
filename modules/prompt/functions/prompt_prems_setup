@@ -9,7 +9,6 @@
 
 zstyle ':vcs_info:*+set-message:*' hooks __prompt_vcs
 function +vi-__prompt_vcs() {
-    set -x
     if [ -n $vcs ]; then
 	zstyle ':prezto:module:vcs' type "$vcs"	
     fi
