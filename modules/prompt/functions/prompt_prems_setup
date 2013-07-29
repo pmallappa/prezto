@@ -128,31 +128,36 @@ function prompt_dir {
 }
 
 function prompt_vcs {
-    if zstyle -t ':prezto:module:vcs' type 'git' ; then
-	local br=$git_info[branch]
-	# Here we detect if we are in a git repo
-	if [[ -n $br ]]; then
-	    local ref dirty
-	    #prompt_rsegment blue black " git "
-	    if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
-		#dirty=$(parse_git_dirty)
-		dirty=$git_info[status]
-		ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
-		prompt_rsegment blue white " $git_info[branch] ⭠ "
-		prompt_rsegment white black " $git_info[remote] "
-		if [[ -z $dirty ]]; then
-		    prompt_rsegment green black " ✔ "
-		else
-		    prompt_rsegment red white "$git_info[status] "
+    local vtype
+    zstyle -s ':prezto:module:vcs' type 'vtype'
+    case $vtype in
+	git*)
+	    local br=$git_info[branch]
+	    # Here we detect if we are in a git repo
+	    if [[ -n $br ]]; then
+		local ref dirty
+		#prompt_rsegment blue black " git "
+		if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+		    #dirty=$(parse_git_dirty)
+		    dirty=$git_info[status]
+		    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
+		    prompt_rsegment blue white " $git_info[branch] ⭠ "
+		    prompt_rsegment white black " $git_info[remote] "
+		    if [[ -z $dirty ]]; then
+			prompt_rsegment green black " ✔ "
+		    else
+			prompt_rsegment red white "$git_info[status] "
+		    fi
 		fi
 	    fi
-	fi
-    else
-	local vtype
-	zstyle -s ':prezto:module:vcs' type 'vtype'
-	prompt_rsegment magenta white " $vtype "
-	prompt_rsegment blue black " $vcs_info_msg_0_ "
-    fi
+		;;
+	hg*)
+	    prompt_rsegment magenta white " $vtype "
+	    prompt_rsegment blue black " $vcs_info_msg_0_ "
+	    ;;
+	default)
+	    ;;
+    esac
 }
 
 function prompt_host {
