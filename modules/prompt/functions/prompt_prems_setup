@@ -6,16 +6,49 @@
 #
 #
 ## Setup usual git info
-zstyle ':vcs_info:git*+set-message:*' hooks __prompt_git
-function +vi-__prompt_git() {
-    if (( $+functions[git-info] )); then
-	git-info
-	# if [ -n $git_info[misc] ]; then
-	#     #git_info[misc]=$(___trim $git_info[misc])
-	#     hook_com[misc]="($git_info[misc])"
-	# fi
-	#hook_com[branch]=$git_info[branchremote]
+
+zstyle ':vcs_info:*+set-message:*' hooks __prompt_vcs
+function +vi-__prompt_vcs() {
+    if [ -n $vcs ]; then
+	zstyle ':prezto:module:vcs' type "$vcs"	
     fi
+
+    case "$vcs" in
+	git*)
+	    if (($+functions[git-info] )); then
+		git-info
+	    fi
+	    ;;
+	hg*)
+	    ;;
+	default)
+	    ;;
+    esac
+}
+
+zstyle ':vcs_info:*+pre-get-data:*' hooks __pre-get-data
+function +vi-__pre-get-data() {
+    # Only Git and Mercurial support and need caching. Abort if any other
+    # VCS is used.
+    [[ "$vcs" != git && "$vcs" != hg ]] && return
+
+    # If the shell just started up or we changed directories (or for other
+    # custom reasons) we must run vcs_info.
+
+    if zstyle -t ':prezto:module:vcs' run ; then
+        return
+    fi
+
+    # If a git/hg command was run then run vcs_info as the status might
+    # need to be updated.
+    case "$(fc -ln $(($HISTCMD-1)))" in
+        git* | hg*)
+	    zstyle ':prezto:module:vcs' run 'yes'
+            ;;
+        default)
+           zstyle ':prezto:module:vcs' run 'no'
+            ;;
+    esac
 }
 
 # function ___trim() {
@@ -94,24 +127,31 @@ function prompt_dir {
     prompt_segment blue black "%~"
 }
 
-function prompt_git {
-    local br=$git_info[branch]
-    # Here we detect if we are in a git repo
-    if [[ -n $br ]]; then
-	local ref dirty
-	#prompt_rsegment blue black " git "
-	if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
-	    #dirty=$(parse_git_dirty)
-	    dirty=$git_info[status]
-	    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
-	    prompt_rsegment magenta black "⭠ $git_info[branch] "
-	    prompt_rsegment white black " $git_info[remote] "
-	   if [[ -z $dirty ]]; then
-	       prompt_rsegment green black " ✔ "
-	   else
-	       prompt_rsegment red black "$git_info[status] "
-	   fi
+function prompt_vcs {
+    if zstyle -t ':prezto:module:vcs' type 'git' ; then
+	local br=$git_info[branch]
+	# Here we detect if we are in a git repo
+	if [[ -n $br ]]; then
+	    local ref dirty
+	    #prompt_rsegment blue black " git "
+	    if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+		#dirty=$(parse_git_dirty)
+		dirty=$git_info[status]
+		ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
+		prompt_rsegment blue white " $git_info[branch] ⭠ "
+		prompt_rsegment white black " $git_info[remote] "
+		if [[ -z $dirty ]]; then
+		    prompt_rsegment green black " ✔ "
+		else
+		    prompt_rsegment red white "$git_info[status] "
+		fi
+	    fi
 	fi
+    else
+	local vtype
+	zstyle -s ':prezto:module:vcs' type 'vtype'
+	prompt_rsegment magenta white " $vtype "
+	prompt_rsegment blue black " $vcs_info_msg_0_ "
     fi
 }
 
@@ -154,14 +194,14 @@ function prompt_padding {
     prompt_line_1a=$(prompt_host)$(prompt_dir)
     prompt_line_1a+=$(prompt_end)
 
-    prompt_line_1b=$(prompt_git)
+    prompt_line_1b=$(prompt_vcs)
     prompt_line_1b+=$(prompt_rend)
 
-  local prompt_line_1a_width=${#${(S%%)prompt_line_1a//$~zero}}
-  local prompt_line_1b_width=${#${(S%%)prompt_line_1b//$~zero}}
-  local prompt_padding_size=$(( COLUMNS
-                                  - prompt_line_1a_width
-                                  - prompt_line_1b_width - 2 ))
+    local prompt_line_1a_width=${#${(S%%)prompt_line_1a//$~zero}}
+    local prompt_line_1b_width=${#${(S%%)prompt_line_1b//$~zero}}
+    local prompt_padding_size=$(( COLUMNS
+            - prompt_line_1a_width
+            - prompt_line_1b_width - 2 ))
   # Try to fit in long path and user@host.
   if (( prompt_padding_size > 0 )); then
       local prompt_padding
@@ -176,7 +216,7 @@ function build_prompt {
     prompt_dir
     prompt_end
     prompt_padding
-    prompt_git
+    prompt_vcs
     prompt_rend
 }
 
@@ -189,29 +229,22 @@ function build_rprompt {
 
 # Must run vcs_info when changing directories.
 function _prompt_prems_chpwd() {
-    zstyle ':prezto:module:git' run 'yes'
+    #zstyle ':prezto:module:vcs' run 'yes'
     vcs_info
 }
 
 function _prompt_prems_precmd {
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
-    local run_vcs
 
-    # Format PWD.
-    #_prompt_prems_pwd
-
-    # Get Git repository information.
-    #if (( $+functions[vcs_info] )); then
-    zstyle -s ':prezto:module:git' run 'run_vcs'
-
-#    if [ "$run_vcs" ~= "yes" ]; then
-	vcs_info
-#    fi
+    if zstyle -t ':prezto:module:vcs' run ; then
+    	if (( $+functions[vcs_info] )); then
+    	    vcs_info
+    	fi
+    fi
 }
 
 function __setup_vcs {
-
     local enabled
     local disabled
     zstyle -a ':prezto:module:git' enabled 'enabled'
@@ -219,7 +252,6 @@ function __setup_vcs {
 
     zstyle ':vcs_info:*' disable $disabled
     zstyle ':vcs_info:*' enable $enabled
-
 }
 
 function __setup_vcs_style {
@@ -234,8 +266,8 @@ function __setup_vcs_style {
     ### for Mercurial
     () {
 	# rev+changes branch misc
-	zstyle ':vcs_info:hg*' formats "(%s)[%i%u %b %m]"
-	zstyle ':vcs_info:hg*' actionformats "(%s|%a)[%i%u %b %m]"
+	zstyle ':vcs_info:hg*' formats "[%i%u %b %m]"
+	zstyle ':vcs_info:hg*' actionformats "(%a)[%i%u %b %m]"
 	zstyle ':vcs_info:hg*:netbeans' use-simple true
 	zstyle ':vcs_info:hg*:*' get-bookmarks true
 	zstyle ':vcs_info:hg*:*' get-mq true
@@ -279,17 +311,23 @@ function __setup_vcs_style {
 }
 
 function prompt_prems_setup {
-    local NL=$'\n'
+    # Load required functions.
+    autoload -Uz add-zsh-hook
+    autoload -Uz vcs_info    
+
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
+
     prompt_opts=(cr percent subst)
+
+    local NL=$'\n'
 
     __setup_vcs
     __setup_vcs_style
 
-    # Load required functions.
-    autoload -Uz add-zsh-hook
-    autoload -Uz vcs_info    
+    # Initially set vcs run to yes
+    zstyle ':prezto:module:vcs' run 'yes'
+
 
     zstyle ':prezto:module:editor:info:keymap:primary' format "%F{red}⊳%F{yellow}⊳%F{green}⊳%f "
 
@@ -315,3 +353,9 @@ function prompt_prems_setup {
 }
 
 prompt_prems_setup "$@"
+
+
+##
+# Local Variables:
+# mode: shell-script
+# End:
