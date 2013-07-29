@@ -9,6 +9,7 @@
 
 zstyle ':vcs_info:*+set-message:*' hooks __prompt_vcs
 function +vi-__prompt_vcs() {
+    set -x
     if [ -n $vcs ]; then
 	zstyle ':prezto:module:vcs' type "$vcs"	
     fi
@@ -16,7 +17,10 @@ function +vi-__prompt_vcs() {
     case "$vcs" in
 	git*)
 	    if (($+functions[git-info] )); then
-		git-info
+		if zstyle -t ':prezto:module:vcs' run 'yes'; then
+		    git-info
+		fi
+		zstyle ':prezto:module:vcs' run 'no'
 	    fi
 	    ;;
 	hg*)
