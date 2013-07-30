@@ -1,0 +1,219 @@
+zmodload -i zsh/parameter || return 1
+# vim: set syntax=zsh:
+
+prompt_powerline_help () {
+    setopt localoptions nocshnullcmd noshnullcmd
+    [[ $ZSH_VERSION < 4.3 ]] &&
+	print 'Requires ZSH_VERSION 4.3'$'\n'
+    <<-\EOF
+        This is a rather heavyweight zsh prompt, based on the powerline font
+        from the popular eponymous vim plugin.
+
+        This prompt is configured using zstyles:
+            # whether the user should be hidden. you can use this to not
+            # display a username if it's your default one, or only show it
+            # if this is a remote shell, e.g. [[ -n $SSH_CONNECTION ]]
+            zstyle ':prompt:powerline:ps1' hide-user
+
+            # explicit color used for the hostname, otherwise a hash-based one
+            # will be selected
+            zstyle ':prompt:powerline:ps1' host-color
+
+        For a (more) detailed readme, see here:
+        https://github.com/Valodim/zsh-prompt-powerline/blob/master/readme.mkd
+	EOF
+}
+
+prompt_powerline_vcsstyles () {
+
+    # set formats
+    local FMT_BRANCH="%b%u%c" # e.g. master¹²
+    local FMT_ACTION="(%F{cyan}%a%f)"   # e.g. (rebase-i)
+    local FMT_PATH="%K{black}$sep1%F{white} %R/%%F{yellow}%S%F{black}"              # e.g. ~/repo/subdir
+
+    # we only use one, so onl pay for one.
+    zstyle ':vcs_info:*:powerline:*' max-exports 1
+
+    zstyle ':vcs_info:*:powerline:*' unstagedstr '¹'  # display ¹ if there are unstaged changes
+    zstyle ':vcs_info:*:powerline:*' stagedstr '²'    # display ² if there are staged changes
+
+    # non-vcs
+    zstyle ':vcs_info:*:powerline:*' nvcsformats   "%K{black}$sep1%F{white} %3~%F{black} "
+
+    # generic vcs
+    zstyle ':vcs_info:*:powerline:*' formats         "${FMT_PATH} %K{27}$sep1%F{123} %s ${FMT_BRANCH} %F{27}"
+    zstyle ':vcs_info:*:powerline:*' actionformats   "${FMT_PATH} %K{27}$sep1%F{123} %s ${FMT_BRANCH}${FMT_ACTION} %F{27}"
+
+    # special hg stuff
+    zstyle ':vcs_info:hg:powerline:*'  formats       "${FMT_PATH} %K{27}$sep1%F{123} ☿ ${FMT_BRANCH} %F{27} "
+    zstyle ':vcs_info:hg:powerline:*' actionformats  "${FMT_PATH} %K{27}$sep1%F{123} ☿ ${FMT_BRANCH}${FMT_ACTION} %F{27}"
+
+    # special git stuff
+    zstyle ':vcs_info:git:powerline:*' formats       "${FMT_PATH} %K{27}$sep1%F{123} ± ${FMT_BRANCH} %m%F{27}" # 
+    zstyle ':vcs_info:git:powerline:*' actionformats "${FMT_PATH} %K{27}$sep1%F{123} ± ${FMT_BRANCH}${FMT_ACTION} %m%F{27}"
+
+    # lofi formats
+    # for details see here: https://github.com/Valodim/zshrc/blob/master/custom/96-vcs_info-lofi.zsh
+    zstyle ':vcs_info:*:powerline:*'   lofiformats   "${FMT_PATH} %K{27}$sep1%F{123} %s %F{27}"
+    zstyle ':vcs_info:hg:powerline:*'  lofiformats   "${FMT_PATH} %K{27}$sep1%F{123} ☿ %F{27}"
+    zstyle ':vcs_info:git:powerline:*' lofiformats   "${FMT_PATH} %K{27}$sep1%F{123} ± %F{27}"
+
+    # see https://github.com/Valodim/zshrc/blob/master/custom/96-vcs_info-githooks.zsh
+    # tracking formats: behind, ahead and seperator
+    zstyle ':vcs_info:git:powerline:*' trackingformats "%%F{46}+%a%%f" "%%F{160}-%b%%f" "%%F{46}+%a%%F{123}/%f%%F{160}-%b%%f"
+
+    # stash format
+    zstyle ':vcs_info:git:powerline:*' stashformat "%%F{81}$sep2 %%B%s "
+
+}
+
+prompt_powerline_precmd () {
+
+    # preserv exitstatus for later
+    local exstat=$?
+
+    # have those here as well
+    local sep1 sep2
+    zstyle -s ':prompt:poweline:ps1:' sep1-char sep1 || sep1='⮀'
+    zstyle -s ':prompt:poweline:ps1:' sep2-char sep2 || sep2='⮁'
+
+    setopt localoptions noksharrays unset
+
+    # the variable we add our bits to
+    prompt_bits=
+
+    # add info about localhist status, if there is any
+    if [[ -n $localhist ]]; then
+        # disabled = red, enabled = blue, enabled for parent dir = yellow
+        if [[ -n $localhist_disable ]]; then
+            prompt_bits+="%F{red}⭠ "
+        elif [[ -n $localhist_specific ]]; then
+            prompt_bits+="%F{12}⭠ "
+        else
+            prompt_bits+="%F{yellow}⭠ "
+        fi
+    fi
+
+    # show stats for this dir
+    if [[ ! -O $PWD ]]; then
+        if [[ -w $PWD ]]; then
+            prompt_bits+="%F{blue}⭤ "
+        elif [[ -x $PWD ]]; then
+            prompt_bits+="%F{yellow}⭤ "
+        elif [[ -r $PWD ]]; then
+            prompt_bits+="%F{red}⭤ "
+        fi
+    fi
+    if [[ ! -w $PWD && ! -r $PWD ]]; then
+        prompt_bits+="%F{red}⭤ "
+    fi
+
+    # end the hostname background
+    prompt_bits+="%F{238}"
+
+    # any signal?
+    if (( exstat > 0 )); then
+        if ! zstyle -t ':prompt:powerline:ps1' no-signal-names; then
+            case $exstat in
+                129)  exstat=HUP ;;
+                130)  exstat=INT ;;
+                131)  exstat=QUIT ;;
+                132)  exstat=ILL ;;
+                134)  exstat=ABRT ;;
+                136)  exstat=FPE ;;
+                137)  exstat=KILL ;;
+                139)  exstat=SEGV ;;
+                141)  exstat=PIPE ;;
+                143)  exstat=TERM ;;
+            esac
+            if ! zstyle -t ':prompt:powerline:ps1' no-stopsig-names; then
+                case $exstat in
+                    # assuming we are on an x86 system here
+                    # this MIGHT get annoying since those are in a range of exit codes
+                    # programs sometimes use.... we'll see.
+                    19)  exstat=STOP ;;
+                    20)  exstat=TSTP ;;
+                    21)  exstat=TTIN ;;
+                    22)  exstat=TTOU ;;
+                esac
+            fi
+        fi
+
+        prompt_bits+="%K{red}$sep1%F{white} %B$exstat %b%F{red}"
+    fi
+
+    # use this to add custom segments
+    # to match colors properly, you will need to have a format like this,
+    # assuming bg is your background and fg is your foreground color:
+    #   %K{bg}%F{fg}text%F{bg}
+    local custom_bits
+    if zstyle -s ':prompt:powerline:ps1' custom-bits custom_bits ''; then
+        prompt_bits+="$custom_bits"
+    fi
+
+    vcs_info 'powerline'
+
+}
+
+prompt_powerline_ps1 () {
+    setopt localoptions noksharrays extendedglob
+
+    local host_color
+    if ! zstyle -s ":prompt:powerline:ps1:${HOST}" host-color host_color; then
+        # get a number from the sha1 hash of the hostname
+        host_color=${${"$(sha1sum <<< $HOST)"//[a-z]#/}[1,14]}
+        # divide by 256/88/8/whatever
+        host_color=$(( host_color % $(echoti colors) ))
+    fi
+
+    # hide username if it's my regular one (anyone else might wanna change this)
+    local user=""
+    if ! zstyle -t ':prompt:powerline:ps1' hide-user; then
+        user=" %F{247}$sep2 %(!.%F{red}.)%n"
+    fi
+
+    integer default_level
+    zstyle -s ':prompt:powerline:ps1' default-sh-level default_level || default_level=1
+    # using eval here because (l::) expansion flag doesn't support variables.
+    # someone who can sneak in variables here can do code execution anyways~
+    eval 'local shlvl="%K{238}%F{$host_color}$sep1${(l:$SHLVL-$default_level::'$sep2':):-} "'
+
+    local userhost="%F{$host_color}${HOST}${user}"
+    local jobstat="%(1j.%K{green}$sep1%F{white} %B%j %b%F{green}.)"
+    local gitinfo='${${vcs_info_msg_0_%%.}/$HOME/~}'
+
+    PROMPT="${shlvl}${userhost} \$prompt_bits${jobstat}${gitinfo}%k$sep1%b%f "
+}
+
+prompt_powerline_setup () {
+    setopt localoptions noksharrays unset
+
+    [[ $ZSH_VERSION < 4.3 ]] && return 1
+
+    local sep1 sep2
+    zstyle -s ':prompt:poweline:ps1:' sep1-char sep1 || sep1='⮀'
+    zstyle -s ':prompt:poweline:ps1:' sep2-char sep2 || sep2='⮁'
+
+    # load zsh/termcap
+    zmodload zsh/terminfo
+
+    # load vcs_info styles
+    autoload -Uz vcs_info
+    prompt_powerline_vcsstyles 
+
+    # set up left-side prompt
+    prompt_powerline_ps1
+
+    # clear right-side prompt
+    RPROMPT=
+
+    # we know add-zsh-hook has been loaded by promptinit
+    add-zsh-hook precmd prompt_powerline_precmd
+
+    # no multiline so we don't need cr, but we do need both % and $ expansion
+    prompt_opts=( percent subst cr )
+
+    return 0
+}
+
+[[ -o kshautoload ]] || prompt_powerline_setup "$@"
