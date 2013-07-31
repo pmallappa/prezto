@@ -129,7 +129,7 @@ function prompt_vcs {
 		if [[ -z $dirty ]]; then
 		    prompt_rsegment green black " ✔ "
 		else
-		    prompt_rsegment red white "$git_info[status] "
+		    prompt_rsegment red white "$git_info[status]"
 		    
 		fi
 	    fi
@@ -232,11 +232,11 @@ function _prompt_prems_chpwd() {
 }
 
 function _prompt_prems_precmd {
-    # if zstyle -t ':prezto:module:vcs' run ; then
-    # 	# if (( $+functions[vcs_info] )); then
-    # 	#     vcs_info
-    # 	# fi
-    # fi
+    if zstyle -t ':prezto:module:vcs' run ; then
+    	if (( $+functions[vcs_info] )); then
+    	    vcs_info
+    	fi
+    fi
 }
 
 function __setup_vcs {
@@ -279,18 +279,18 @@ function __setup_vcs_style {
 	zstyle ':prezto:module:git:info' verbose 'yes'
 
 	zstyle ':prezto:module:git:info:action' format ':%s'
-	zstyle ':prezto:module:git:info:added' format  '✚'
-	zstyle ':prezto:module:git:info:ahead' format  '⬆'
-	zstyle ':prezto:module:git:info:behind' format  '⬇'
+	zstyle ':prezto:module:git:info:added' format  '✚ '
+	zstyle ':prezto:module:git:info:ahead' format  '⬆ '
+	zstyle ':prezto:module:git:info:behind' format  '⬇ '
 	zstyle ':prezto:module:git:info:branch' format '%b'
 	zstyle ':prezto:module:git:info:remote' format '%R'
 	zstyle ':prezto:module:git:info:commit' format ':%.7c'
-	zstyle ':prezto:module:git:info:deleted' format  '✖'
-	zstyle ':prezto:module:git:info:modified' format  '✱'
+	zstyle ':prezto:module:git:info:deleted' format  '✖ '
+	zstyle ':prezto:module:git:info:modified' format  '✱ '
 	zstyle ':prezto:module:git:info:position' format ':%p'
-	zstyle ':prezto:module:git:info:renamed' format  '➜'
-	zstyle ':prezto:module:git:info:stashed' format  '✭'
-	zstyle ':prezto:module:git:info:unmerged' format  '═'
+	zstyle ':prezto:module:git:info:renamed' format  '➜ '
+	zstyle ':prezto:module:git:info:stashed' format  '✭ '
+	zstyle ':prezto:module:git:info:unmerged' format  '═ '
 	zstyle ':prezto:module:git:info:untracked' format '' 
 
 	zstyle ':prezto:module:git:info:keys' format \
