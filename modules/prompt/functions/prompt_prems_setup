@@ -233,6 +233,7 @@ function build_rprompt {
 
 # Must run vcs_info when changing directories.
 function _prompt_prems_chpwd() {
+    set -x
     case "$(fc -ln $(($HISTCMD-1)))" in
         hg*|git*)
             zstyle ':prezto:module:vcs' run 'yes'
@@ -241,15 +242,16 @@ function _prompt_prems_chpwd() {
             zstyle ':prezto:module:vcs' run 'no'
             ;;
     esac
+    set +x
     vcs_info
 }
 
 function _prompt_prems_precmd {
-    if zstyle -t ':prezto:module:vcs' run ; then
-    	if (( $+functions[vcs_info] )); then
+    #if zstyle -t ':prezto:module:vcs' run ; then
+    #	if (( $+functions[vcs_info] )); then
     	    vcs_info
-    	fi
-    fi
+    #	fi
+    #fi
 }
 
 function __setup_vcs {
