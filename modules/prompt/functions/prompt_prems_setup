@@ -18,8 +18,8 @@ function +vi-__prompt_vcs() {
 	    if (($+functions[git-info] )); then
 		if zstyle -t ':prezto:module:vcs' run 'yes'; then
 		    git-info
+		    zstyle ':prezto:module:vcs' run 'no'
 		fi
-		zstyle ':prezto:module:vcs' run 'no'
 	    fi
 	    ;;
 	hg*)
@@ -27,7 +27,6 @@ function +vi-__prompt_vcs() {
 	default)
 	    ;;
     esac
-    
 }
 
 zstyle ':vcs_info:*+pre-get-data:*' hooks __pre-get-data
@@ -54,6 +53,13 @@ function +vi-__pre-get-data() {
             ;;
     esac
 }
+
+# function ___trim() {
+#     local var=$@
+#     var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
+#     var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
+#     echo -n "$var"
+# }
 
 # Begin a segment
 # Takes two arguments, background and foreground. Both can be omitted,
@@ -177,7 +183,6 @@ function prompt_status() {
 }
 
 function prompt_padding {
-    #set -x
     local prompt_line_1a
     local prompt_line_1b
     local zero='%([BSUbfksu]|([FB]|){*})'
@@ -207,14 +212,12 @@ function prompt_padding {
 
 function build_prompt {
     RETVAL=$?
-    #set -x
     prompt_host
     prompt_dir
     prompt_end
     prompt_padding
     prompt_vcs
     prompt_rend
-    set +x
 }
 
 function build_rprompt {
@@ -240,6 +243,7 @@ function _prompt_prems_precmd {
 }
 
 function __setup_vcs {
+
     local enabled
     local disabled
     zstyle -a ':prezto:module:git' enabled 'enabled'
@@ -247,6 +251,7 @@ function __setup_vcs {
 
     zstyle ':vcs_info:*' disable $disabled
     zstyle ':vcs_info:*' enable $enabled
+
 }
 
 function __setup_vcs_style {
