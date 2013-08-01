@@ -127,22 +127,26 @@ function prompt_vcs {
 	    # Here we detect if we are in a git repo
 	    if [[ -n $br  ]]; then
 		local ref dirty
-		#dirty=$(parse_git_dirty)
-		dirty=$git_info[status]
-		ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref head -s abbrev |head -n1 2> /dev/null)"
-		prompt_rsegment blue white "$git_info[branch] ⭠"
-		prompt_rsegment white black "$git_info[remote]"
-		if [[ -z $dirty ]]; then
-		    prompt_rsegment green black " ✔ "
-		else
-		    prompt_rsegment red white "$git_info[status]"
-		    
+		#prompt_rsegment blue black " git "
+		if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+		    #dirty=$(parse_git_dirty)
+		    dirty=$git_info[status]
+		    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
+		    prompt_rsegment blue white "$git_info[branch] ⭠"
+		    if (( ${#git_info[remote]} > 0 )); then
+			prompt_rsegment white black "$git_info[remote]"
+		    fi
+		    if [[ -z $dirty ]]; then
+			prompt_rsegment green black "✔"
+		    else
+			prompt_rsegment red white "$git_info[status]"
+		    fi
 		fi
 	    fi
 	    ;;
 	hg*)
-	    prompt_rsegment magenta white " $vtype "
-	    prompt_rsegment blue black " $vcs_info_msg_0_ "
+	    prompt_rsegment magenta white "$vtype"
+	    prompt_rsegment blue black "$vcs_info_msg_0_"
 	    ;;
 	default)
 	    ;;
@@ -229,8 +233,14 @@ function build_rprompt {
 
 # Must run vcs_info when changing directories.
 function _prompt_prems_chpwd() {
-    zstyle ':prezto:module:vcs' run 'yes'
-    unset git_info
+    case "$(fc -ln $(($HISTCMD-1)))" in
+        hg*|git*)
+            zstyle ':prezto:module:vcs' run 'yes'
+            ;;
+        default)
+            zstyle ':prezto:module:vcs' run 'no'
+            ;;
+    esac
     vcs_info
 }
 
