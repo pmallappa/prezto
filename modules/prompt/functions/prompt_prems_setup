@@ -134,12 +134,12 @@ function prompt_vcs {
 		    ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git show-ref --head -s --abbrev |head -n1 2> /dev/null)"
 		    prompt_rsegment blue white "$git_info[branch] ⭠"
 		    if (( ${#git_info[remote]} > 0 )); then
-			prompt_rsegment white black "$git_info[remote]"
+			prompt_rsegment 245 16 "$git_info[remote]"
 		    fi
 		    if [[ -z $dirty ]]; then
-			prompt_rsegment green black "✔"
+			prompt_rsegment 237 120 "✔"
 		    else
-			prompt_rsegment red white "$git_info[status]"
+			prompt_rsegment 237 197 "$git_info[status]"
 		    fi
 		fi
 	    fi
@@ -156,10 +156,11 @@ function prompt_vcs {
 function prompt_host {
     local hostcolor
     local host="$(hostname)"
-    fg=black
+    fg=16
     case $host in
 	pmallappa-server)
-            bg=yellow;;
+            bg=130
+	    fg=white;;
 	pmallappa-laptop)
 	    bg=166;;
 	pmallappa-test)
