@@ -1,7 +1,7 @@
 ### linux / zeesh! plugin
 
-if [ "$(uname)" != "Linux" ]; then
-	return
+if [[ "$OSTYPE" != linux* ]]; then
+  return 1
 fi
 
 setopt extended_glob
