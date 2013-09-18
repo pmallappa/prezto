@@ -1,0 +1,81 @@
+##
+# Use versatile acme, Figure out font, size and 
+# setup namespace for multiple acme instances
+# Authour:
+# 		Prem Mallappa <prem.mallappa@gmail.com>
+#
+##
+
+if [ -z "$PLAN9" ]; then
+	echo "$$PLAN9 not set"
+	return 1
+fi
+
+local usage font size instance
+local -a linuxfontlist osxfontlist fontlist
+usage="$(
+cat <<EOF
+usage: $0 [-option=arg][-option=arg]
+
+options:
+  -f    font name, to list use \"9p ls font\"
+  -s    Font size to use
+  -n    intance number, if another acme is already running,
+		it will setup namespace with plumber etc.
+EOF
+)"
+set -x
+linuxfontlist=('Droid Sans Mono'
+	'Consolas'
+	'Monaco'
+	'Source Code Pro for Powerline'
+)
+
+osxfontlist=('PTMono-Regular'
+	'Menlo'
+	'Monaco'
+)
+
+case `uname` in
+	[Ll]inux)
+	fontlist=($linuxfontlist);;
+	[Dd]arwin)
+	fontlist=($osxfontlist);;
+	*)
+esac
+
+if [ -z "$(9p ls font)" ]; then
+	fontsrv &
+fi
+
+size=10
+
+while getopts ':f:s:n:' opt; do
+	case "$opt" in
+	(f) font=$OPTARG ;;
+	(s) size=$OPTARG ;;
+	(n) instance=$OPTARG ;;
+	(*) print "$usage" >&2;;
+	esac
+done
+shift $(( $OPTIND - 1 ))
+
+for f in $fontlist; do
+	font="/mnt/font/${f}/${size}a/font"
+	if [ ! -z "$(9p ls $font)" ]; then
+		break
+	fi
+done
+
+export NAMESPACE="/tmp/ns.${USER}.:${instance}"
+if [ -e ${NAMESPACE} ]; then
+	echo "Instance $instance already exist, choose new instance"
+	return 1
+fi
+
+mkdir -p ${NAMESPACE}
+
+plumber >/dev/null 2>&1
+
+command acme -f $font -F $font $*
+

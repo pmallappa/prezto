@@ -1,8 +1,8 @@
 zstyle ":prems:module:tmux" tmux 't'
 local emacs_in_tmux=""
-local SERVER_FILE="${HOME}/.emacs.d/server/server"
+local SRV_FILE=${SERVER_FILE:-"${HOME}/.emacs.d/server/server"}
 
-if [ ! -e ${SERVER_FILE} ]; then
+if [ ! -e ${SRV_FILE} ]; then
     echo "Emacs server file not found ${SERVER_FILE}" && return 0
 fi
 
@@ -12,18 +12,18 @@ fi
 zstyle ":prems:module:tmux" emacs-window 'ew'
 zstyle ":prems:module:tmux" session-name 'ts'
 
-#local ew=`$t list-windows -t $ts 2>/dev/null |  awk -F: '/emacs/ {print $1}'` 
+#local ew=`$t list-windows -t $ts 2>/dev/null |  awk -F: '/emacs/ {print $1}'`
 
 #if [[ `$t list-windows -t $ts` =~ "emacs" ]]; then
 #    emacs_in_tmux="yes"
 #fi
 
 #####
-# For all the files on command line, see if we can figure out the 
+# For all the files on command line, see if we can figure out the
 # line numbers (from compiler error messages)
 #####
 local err=""
-local cmd="${EMACSCLIENT} -n -f ${SERVER_FILE} "
+local cmd="${EMACSCLIENT} -n -f ${SRV_FILE} "
 for i in $@
 do
     local -a f
@@ -34,7 +34,7 @@ do
 		cmd+=" +${f[2]}:${f[3]} ${f[1]}"
 	    else
 		cmd+=" +${f[2]} ${f[1]}"
-	    fi 
+	    fi
 	    ;;
 	*)
 	    cmd+=" $i"
@@ -47,7 +47,7 @@ eval $cmd
 #echo $cmd
 
 ###
-# in the end select the emacs window if we were able to open something 
+# in the end select the emacs window if we were able to open something
 ###
 #echo "err:$err, emacs $emacs_in_tmux -t $ts:$ew"
 [ "X$err" != "Xyes" ] && tmux select-window -t $ts:$ew 2>/dev/null

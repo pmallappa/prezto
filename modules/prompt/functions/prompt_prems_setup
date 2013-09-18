@@ -10,7 +10,7 @@
 zstyle ':vcs_info:*+set-message:*' hooks __prompt_vcs
 function +vi-__prompt_vcs() {
     if [ -n $vcs ]; then
-	zstyle ':prezto:module:vcs' type "$vcs"	
+	zstyle ':prezto:module:vcs' type "$vcs"
     fi
 
     case "$vcs" in
@@ -159,8 +159,8 @@ function prompt_host {
     fg=16
     case $host in
 	pmallappa-server)
-            bg=130
-	    fg=white;;
+            bg=10
+	    fg=16;;
 	pmallappa-laptop)
 	    bg=166;;
 	pmallappa-test)
@@ -179,12 +179,13 @@ function prompt_host {
 
 function prompt_status() {
     local symbols
+    local j
     symbols=()
     [[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
     [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}⚡"
-    [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{cyan}%}⚙"
-    
-    [[ -n "$symbols" ]] && prompt_rsegment black black "$symbols"
+    [[ $(jobs -l | wc -l) -gt 0 ]] && j="⚙ "
+    [[ -n "$j" ]] && prompt_rsegment 208 16 "$j"
+    [[ -n "$symbols" ]] && prompt_rsegment 247 247 "$symbols"
 }
 
 function prompt_padding {
@@ -196,14 +197,14 @@ function prompt_padding {
 
     prompt_line_1b="$(prompt_vcs)"
     prompt_line_1b+="$(prompt_rend)"
-    
+
 
     local prompt_line_1a_width=${#${(S%%)prompt_line_1a//$~zero}}
     local prompt_line_1b_width=${#${(S%%)prompt_line_1b//$~zero}}
     if (( prompt_line_1b_width > 0 )); then
 	prompt_line_1b_width=$(( prompt_line_1b_width + 1 ))
     fi
-    
+
     local prompt_padding_size=$(( COLUMNS
             - prompt_line_1a_width
             - prompt_line_1b_width ))
@@ -289,7 +290,7 @@ function __setup_vcs_style {
 	zstyle ':vcs_info:hg*:*' hgrevformat "%r" # only show local rev.
 	zstyle ':vcs_info:hg*:*' branchformat "%b" # only show branch
     }
-    
+
     ### Mark individual style
     () {
 	zstyle ':prezto:module:git:info' verbose 'yes'
@@ -307,7 +308,7 @@ function __setup_vcs_style {
 	zstyle ':prezto:module:git:info:renamed' format  '➜ '
 	zstyle ':prezto:module:git:info:stashed' format  '✭ '
 	zstyle ':prezto:module:git:info:unmerged' format  '═ '
-	zstyle ':prezto:module:git:info:untracked' format '' 
+	zstyle ':prezto:module:git:info:untracked' format ''
 
 	zstyle ':prezto:module:git:info:keys' format \
 	    'added'     '%a' \
@@ -324,7 +325,7 @@ function __setup_vcs_style {
 function prompt_prems_setup {
     # Load required functions.
     autoload -Uz add-zsh-hook
-    autoload -Uz vcs_info    
+    autoload -Uz vcs_info
 
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
@@ -354,7 +355,7 @@ function prompt_prems_setup {
     CURRENT_BG='NONE'
     SEGMENT_SEPARATOR='⮀'
     SEGMENT_RSEPARATOR='⮂'
-    
+
     PROMPT='%{%f%b%k%}$(build_prompt)$NL${editor_info[keymap]} '
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 

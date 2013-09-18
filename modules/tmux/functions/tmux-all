@@ -19,9 +19,10 @@ if [ "X$s" == "X" ]; then
    fi
    s=$curses
 fi
-
-for window in `tmux list-windows -F '#I'`; do
-    for pane in `tmux list-panes -t $s:$window -F '#P'`; do
+windows=("${(@f)$(tmux list-windows -F '#I')}");
+for window in $windows; do
+    panes=("${(@f)$(tmux list-panes -t $s:$window -F '#P')}");
+    for pane in $panes; do
 	tmux send-keys -t "$s:$window.$pane" "$@" "C-m"
     done
 done
