@@ -117,11 +117,17 @@ function prompt_vcs {
 	git*|hg*)
 	    [[ -n "${my_hook_com[stash]}" ]] && \
 		prompt_segment "" "" "[${my_hook_com[stash]}]"
-	    [[ -n "${my_hook_com[ahead]}" ]] && \
-		prompt_segment "" "" "[${my_hook_com[ahead]}]"
-	    [[ -n "${my_hook_com[behind]}" ]] && \
-		prompt_segment "" "" "[${my_hook_com[behind]}]"
+	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
+		echo -n "["
 
+		[[ -n "${my_hook_com[ahead]}" ]] && \
+		    prompt_segment "" 185 "${my_hook_com[ahead]}"
+
+		[[ -n "${my_hook_com[behind]}" ]] && prompt_segment "" "" "/" &&    \
+		    prompt_segment "" 213 "${my_hook_com[behind]}"
+
+		prompt_segment "" "" "]"
+	    fi
 	    SEGMENT_SEPARATOR=""
 	    prompt_segment "" "" "${my_hook_com[branch]}"
 
