@@ -1,7 +1,8 @@
 ### osx / zeesh! plugin
 
-if [ "X"`uname` != "XDarwin" ]; then
-    return 0
+ Return if requirements are not found.
+if [[ "$OSTYPE" != darwin* ]]; then
+  return 1
 fi
 
 fpath=( $module_dir/functions $fpath )
