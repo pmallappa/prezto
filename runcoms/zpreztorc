@@ -173,7 +173,7 @@ zstyle ':prems:load' pmodule \
   'linux' \
   'virtualbox' \
   'work' \
-  #'vcs' \
+  'vcs' \
 
 ## Prompt
 #zstyle ':prems:module:prompt' theme 'prems'

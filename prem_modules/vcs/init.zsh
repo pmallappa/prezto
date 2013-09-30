@@ -1,7 +1,7 @@
 autoload -U add-zsh-hook
 
-#fpath=( $moddir/comp $moddir/functions $fpath )
-#autoload -U $moddir/functions/*(:t) $moddir/comp/*(:t)
+# Need a global associative array we can access from format
+typeset -xA my_hook_com
 
 ######
 ## Heart of vcs_info
@@ -9,24 +9,28 @@ autoload -U add-zsh-hook
 function {
     local enabled
     local disabled
-    zstyle -a ':prems:module:vcs' enabled 'enabled'
-    zstyle -a ':prems:module:vcs' disabled 'disabled'
+    zstyle -a ':prezto:module:vcs' enabled 'enabled'
+    zstyle -a ':prezto:module:vcs' disabled 'disabled'
 
     zstyle ':vcs_info:*' disable $disabled
     zstyle ':vcs_info:*' enable $enabled
+
+    zstyle ':vcs_info:*' actionformats '{|%s%f%c: %b|%a}'
+
+    # This includes git-svn, hg-svn, hg-git etc
+    zstyle ':vcs_info:(hg*|git*):*' get-revision true
+    zstyle ':vcs_info:(hg*|git*):*' check-for-changes true
+
+
 }
 
-# Only run vcs_info when necessary to speed up the prompt and make using
-# check-for-changes bearable in bigger repositories. This setup was
-# inspired by Bart Trojanowski
-# (http://jukie.net/~bart/blog/pimping-out-zsh-prompt).
-#
-# This setup is by no means perfect. It can only detect changes done
-# through the VCS's commands run by the current shell. If you use your
-# editor to commit changes to the VCS or if you run them in another shell
-# this setup won't detect them. To fix this just run "cd ." which causes
-# vcs_info to run and update the information. If you use aliases to run
-# the VCS commands update the case check below.
+function +vi-show-hook-array() {
+    for key in ${(k)my_hook_com}
+    do
+	print -- "  $key : ${my_hook_com[$key]}"
+    done
+}
+
 zstyle ':vcs_info:*+pre-get-data:*' hooks pre-get-data
 +vi-pre-get-data() {
     # Only Git and Mercurial support and need caching.
@@ -34,8 +38,8 @@ zstyle ':vcs_info:*+pre-get-data:*' hooks pre-get-data
 
     # If the shell just started up or we changed directories (or for other
     # custom reasons) we must run vcs_info.
-    if zstyle -t ':prems:module:vcs' run 'yes'; then
-	zstyle ':prems:module:vcs' run 'no'
+    if zstyle -t ':prezto:module:vcs' run 'yes'; then
+	zstyle ':prezto:module:vcs' run 'no'
         return
     fi
 

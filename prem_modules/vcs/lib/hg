@@ -1,5 +1,5 @@
 
-local VCS_HG_INFO_FMT="|$FG[002]%s%f%c: $FG[136]%b%f $FX[bold]$FG[240]%i$RST"
+local VCS_HG_INFO_FMT="%f%c : $FG[136]%b%f $FX[bold]$FG[240]%i$RST"
 local VCS_HG_INFO_ACTION_FMT="{${VCS_INFO_FORMAT}|%a$RST}"
 
 ########
@@ -9,10 +9,10 @@ local VCS_HG_INFO_ACTION_FMT="{${VCS_INFO_FORMAT}|%a$RST}"
 
 # rev+changes branch misc
 # First, remove the hash from the default 'branchformat', then add 12 bit to 'format':
-zstyle ':vcs_info:hg*:*' branchformat '%b'
+zstyle ':vcs_info:hg*:*' branchformat ''
 #zstyle ':vcs_info:hg*:*' branchformat '%b 12.12%i'
-zstyle ':vcs_info:hg*:*' formats 	"${VCS_HG_INFO_FMT}"
-zstyle ':vcs_info:hg*:*' actionformat 	"${VCS_HG_INFO_ACTION_FMT}"
+zstyle ':vcs_info:hg*:*' formats 	''
+zstyle ':vcs_info:hg*:*' actionformat 	''
 zstyle ':vcs_info:hg*:*' get-bookmarks true
 zstyle ':vcs_info:hg*:*' get-mq true
 zstyle ':vcs_info:hg*:*' get-unapplied true
@@ -22,60 +22,49 @@ zstyle ':vcs_info:hg*:*' hgrevformat "%r" # only show local rev.
 zstyle ':vcs_info:hg*:*' check-for-changes true
 zstyle ':vcs_info:hg*:*' get-revision true
 
-# The hash is available in the hgrev-format hook, store a copy of it in the
-# user_data array so we can access it in the second function
-function +vi-hg-storerev() {
-    user_data[hash]=${hook_com[hash]}
+zstyle ':vcs_info:hg*+post-backend:*' hooks \
+    hg-init-hook-array \
+    hg-prompt-info \
+    hg-branchhead \
+    #show-hook-array
+
+function +vi-hg-init-hook-array() {
+    my_hook_com=("${(@kv)hook_com}")
+
 }
 
-zstyle ':vcs_info:hg+set-message:*' hooks hg-prompt-info hg-branchhead
-
 function +vi-hg-prompt-info() {
+
+    #set -x
     local -A info_formats
     local info_format
 
-    local action
-    local action_format
-    local action_formatted
-
+    local action action_format action_formatted
+    local branch_format branch_formatted
     local added=0
-    local added_format
-    local added_formatted
+    local added_format added_formatted
     local deleted=0
-    local deleted_format
-    local deleted_formatted
+    local deleted_format deleted_formatted
     local dirty=0
-    local dirty_format
-    local dirty_formatted
+    local dirty_format dirty_formatted
     local modified=0
-    local modified_format
-    local modified_formatted
+    local modified_format modified_formatted
     local renamed=0
-    local renamed_format
-    local renamed_formatted
+    local renamed_format renamed_formatted
     local stashed=0
-    local stashed_format
-    local stashed_formatted
+    local stashed_format stashed_formatted
     local status_cmd
     local unmerged=0
-    local unmerged_format
-    local unmerged_formatted
+    local unmerged_format unmerged_formatted
     local untracked=0
-    local untracked_format
-    local untracked_formatted
-    local name
-    local name_format
-    local name_formatted
-
-    # Clean up previous $pvcs_info.
-    unset pvcs_info
-    typeset -gA pvcs_info
-
+    local untracked_format untracked_formatted
+    local name name_format name_formatted
+    #set -x
     # Use porcelain status for easy parsing.
     status_cmd='hg status' # | awk '{print $1}' | sort | uniq'
 
     # Ignore submodule status.
-    zstyle -s ':prezto:module:vcs:status:ignore' submodules 'ignore_submodules'
+    zstyle -s ':prezto:module:hg:status:ignore' submodules 'ignore_submodules'
     if [[ -n "$ignore_submodules" ]]; then
 	status_cmd+=" --ignore-submodules=${ignore_submodules}"
     fi
@@ -83,14 +72,14 @@ function +vi-hg-prompt-info() {
     # Format commit.
     #commit="$(git rev-parse HEAD 2> /dev/null)"
     if [[ -n "$commit" ]]; then
-	zstyle -s ':prezto:module:vcs:info:commit' format 'commit_format'
+	zstyle -s ':prezto:module:hg:info:commit' format 'commit_format'
 	zformat -f commit_formatted "$commit_format" "c:$commit"
     fi
 
     # Format action.
     #action="$(_git-action)"
     if [[ -n "$action" ]]; then
-	zstyle -s ':prezto:module:vcs:info:action' format 'action_format'
+	zstyle -s ':prezto:module:hg:info:action' format 'action_format'
 	zformat -f action_formatted "$action_format" "s:$action"
     fi
 
@@ -110,53 +99,54 @@ function +vi-hg-prompt-info() {
 
     # Format added.
     if (( $added > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:added' format 'added_format'
+	zstyle -s ':prezto:module:hg:info:added' format 'added_format'
 	zformat -f added_formatted "$added_format" "a:$added_format"
     fi
 
     # Format deleted.
     if (( $deleted > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:deleted' format 'deleted_format'
+	zstyle -s ':prezto:module:hg:info:deleted' format 'deleted_format'
 	zformat -f deleted_formatted "$deleted_format" "d:$deleted_format"
     fi
 
     # Format modified.
     if (( $modified > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:modified' format 'modified_format'
+	zstyle -s ':prezto:module:hg:info:modified' format 'modified_format'
 	zformat -f modified_formatted "$modified_format" "m:$modified"
     fi
 
     # Format renamed.
     if (( $renamed > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:renamed' format 'renamed_format'
+	zstyle -s ':prezto:module:hg:info:renamed' format 'renamed_format'
 	zformat -f renamed_formatted "$renamed_format" "r:$renamed"
     fi
 
     # Format unmerged.
     if (( $unmerged > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:unmerged' format 'unmerged_format'
+	zstyle -s ':prezto:module:hg:info:unmerged' format 'unmerged_format'
 	zformat -f unmerged_formatted "$unmerged_format" "U:$unmerged"
     fi
 
     # Format untracked.
     if (( $untracked > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:untracked' format 'untracked_format'
+	zstyle -s ':prezto:module:hg:info:untracked' format 'untracked_format'
 	zformat -f untracked_formatted "$untracked_format" "u:$untracked"
     fi
 
     # Format dirty and clean.
     if (( $dirty > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:dirty' format 'dirty_format'
+	zstyle -s ':prezto:module:hg:info:dirty' format 'dirty_format'
 	zformat -f dirty_formatted "$dirty_format" "D:$dirty"
     else
-	zstyle -s ':prezto:module:vcs:info:clean' format 'clean_formatted'
+	zstyle -s ':prezto:module:hg:info:clean' format 'clean_formatted'
     fi
 
-    zstyle -s ':prezto:module:vcs:info:name' format 'name_format'
-    zformat -f name_formatted "$name_format" "v:$vcs"
+    branch=$(hg branch)
+    zstyle -s ':prezto:module:hg:info:branch' format 'branch_format'
+    zformat -f branch_formatted "$branch_format" "b:$branch"
 
     # Format info.
-    zstyle -a ':prezto:module:vcs:info:keys' format 'info_formats'
+    zstyle -a ':prezto:module:hg:info:keys' format 'info_formats'
     for info_format in ${(k)info_formats}; do
 	zformat -f REPLY "$info_formats[$info_format]" \
 	    "D:$dirty_formatted" \
@@ -164,32 +154,33 @@ function +vi-hg-prompt-info() {
 	    "C:$clean_formatted" \
 	    "U:$unmerged_formatted" \
 	    "a:$added_formatted" \
+	    "b:$branch_formatted" \
 	    "d:$deleted_formatted" \
 	    "m:$modified_formatted" \
 	    "r:$renamed_formatted" \
-	    "u:$untracked_formatted" \
-	    "v:$name_formatted"
-	pvcs_info[$info_format]="$REPLY"
+	    "u:$untracked_formatted"
+	my_hook_com[$info_format]="$REPLY"
     done
 
     unset REPLY
+    #set +x
 }
 
 function +vi-hg-branchhead() {
     local branchheadsfile i_tiphash i_branchname
     local -a branchheads
-    local branchheadsfile=${hook_com[base]}/.hg/branchheads.cache
+    local branchheadsfile=${my_hook_com[base]}/.hg/branchheads.cache
 
     # Bail out if any mq patches are applied
-    [[ -s ${hook_com[base]}/.hg/patches/status ]] && return 0
+    [[ -s ${my_hook_com[base]}/.hg/patches/status ]] && return 0
 
     if [[ -r ${branchheadsfile} ]] ; then
         while read -r i_tiphash i_branchname ; do
             branchheads+=( $i_tiphash )
         done < ${branchheadsfile}
 
-        if [[ ! ${branchheads[(i)${user_data[hash]}]} -le ${#branchheads} ]] ; then
-            hook_com[revision]="^ ${hook_com[revision]}"
+        if [[ ! ${branchheads[(i)${my_hook_com[hash]}]} -le ${#branchheads} ]] ; then
+            my_hook_com[revision]="^ ${my_hook_com[revision]}"
         fi
     fi
 }
@@ -201,9 +192,9 @@ zstyle ':vcs_info:hg+set-hgrev-format:*' hooks hg-shorthash
 function +vi-hg-shorthash() {
     local -a parents
 
-    parents=( ${(s:+:)hook_com[hash]} )
+    parents=( ${(s:+:)my_hook_com[hash]} )
     parents=( ${(@r:12:)parents} )
-    hook_com[rev-replace]=${(j:+:)parents}
+    my_hook_com[rev-replace]=${(j:+:)parents}
 
     ret=1
 }
