@@ -8,7 +8,7 @@ zstyle ':vcs_info:git*' use-simple true			# hash changes branch misc
 
 
 ### check-for-changes just in some places ####################################
-# `~/work/octeon'.
+# `~/work/'.
 # There are the projects I want the information for most. They are also
 # a lot smaller than the linux kernel so the information can be retrieved
 # instantaneously - even on my old laptop at 600MHz. And the following code
@@ -20,7 +20,7 @@ function estyle-cfc() {
     local d
     local -a cfc_dirs
     cfc_dirs=(
-        ${HOME}/work/octeon/*(/)
+        ${HOME}/work/*(/)
     )
 
     for d in ${cfc_dirs}; do
@@ -30,91 +30,55 @@ function estyle-cfc() {
     return 1
 }
 
+# Do not want to dray all values behind, if the user changes
+# directories, we may change from one VCS to another
+function +vi-clear-hook-array() {
+	my_hook_com=()
+}
 
-zstyle ':vcs_info:git*+set-message:*' hooks git-prompt-info
+# Useful to test values outside the hooks
+function +vi-git-init-hook-array() {
+    my_hook_com=("${(@kv)hook_com}")
+    for key in ${(k)git_info}; do
+	my_hook_com[$key]=${git_info[$key]}
+    done
+}
 
-# Gets the Git special action (am, bisect, cherry, merge, rebase).
-# Borrowed from vcs_info and edited.
-function _git-action {
-  local action_dir
-  local git_dir="$(git-dir)"
-  local apply_formatted
-  local bisect_formatted
-  local cherry_pick_formatted
-  local cherry_pick_sequence_formatted
-  local merge_formatted
-  local rebase_formatted
-  local rebase_interactive_formatted
-  local rebase_merge_formatted
+# ============================================================================
+# Hooks
+# ============================================================================
+# Some silly things to remember:
+# All vcs_info hooks need the '+vi-' prefix in there definition
+# Repetitive calls to 'hooks' overwrite each other. List all hook functions for ai
+# hook in one call (I wasted time with that one).
+# Also, vcs_info_hookadd can be used the register the hooks statically (independent
+# from context). This HAS to be called after vcs_info and not here.
+# 	vcs_info_hookadd set-message git-st git-remotebranch
 
-  for action_dir in \
-    "${git_dir}/rebase-apply" \
-    "${git_dir}/rebase" \
-    "${git_dir}/../.dotest"
-  do
-    if [[ -d "$action_dir" ]] ; then
-      zstyle -s ':prezto:module:git:info:action:apply' format 'apply_formatted' || apply_formatted='apply'
-      zstyle -s ':prezto:module:git:info:action:rebase' format 'rebase_formatted' || rebase_formatted='rebase'
+#	zstyle ':vcs_info:git*+set-message:*' hooks \
+#		init-hook-array \
+#		git-remotebranch \
+#		show-hook-array
 
-      if [[ -f "${action_dir}/rebasing" ]] ; then
-        print "$rebase_formatted"
-      elif [[ -f "${action_dir}/applying" ]] ; then
-        print "$apply_formatted"
-      else
-        print "${rebase_formatted}/${apply_formatted}"
-      fi
+# Post-backend is called once, whereas set-message is called on every
+# message vcs_info_msg_X_. So save a few resources
+zstyle ':vcs_info:*+pre-get-data:*' hooks \
+	clear-hook-array
 
-      return 0
+zstyle ':vcs_info:git*+post-backend:*' hooks \
+    git-remotebranch \
+    git-prompt-info \
+    git-init-hook-array \
+    #show-hook-array
+
+function +vi-git-prompt-info() {
+    # enable for profiling this function
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
+    if (( $+function[git-info] )); then
+        git-info
     fi
-  done
-
-  for action_dir in \
-    "${git_dir}/rebase-merge/interactive" \
-    "${git_dir}/.dotest-merge/interactive"
-  do
-    if [[ -f "$action_dir" ]]; then
-      zstyle -s ':prezto:module:git:info:action:rebase-interactive' format 'rebase_interactive_formatted' || rebase_interactive_formatted='rebase-interactive'
-      print "$rebase_interactive_formatted"
-      return 0
-    fi
-  done
-
-  for action_dir in \
-    "${git_dir}/rebase-merge" \
-    "${git_dir}/.dotest-merge"
-  do
-    if [[ -d "$action_dir" ]]; then
-      zstyle -s ':prezto:module:git:info:action:rebase-merge' format 'rebase_merge_formatted' || rebase_merge_formatted='rebase-merge'
-      print "$rebase_merge_formatted"
-      return 0
-    fi
-  done
-
-  if [[ -f "${git_dir}/MERGE_HEAD" ]]; then
-    zstyle -s ':prezto:module:git:info:action:merge' format 'merge_formatted' || merge_formatted='merge'
-    print "$merge_formatted"
-    return 0
-  fi
-
-  if [[ -f "${git_dir}/CHERRY_PICK_HEAD" ]]; then
-    if [[ -d "${git_dir}/sequencer" ]] ; then
-      zstyle -s ':prezto:module:git:info:action:cherry-pick-sequence' format 'cherry_pick_sequence_formatted' || cherry_pick_sequence_formatted='cherry-pick-sequence'
-      print "$cherry_pick_sequence_formatted"
-    else
-      zstyle -s ':prezto:module:git:info:action:cherry-pick' format 'cherry_pick_formatted' || cherry_pick_formatted='cherry-pick'
-      print "$cherry_pick_formatted"
-    fi
-
-    return 0
-  fi
-
-  if [[ -f "${git_dir}/BISECT_LOG" ]]; then
-    zstyle -s ':prezto:module:git:info:action:bisect' format 'bisect_formatted' || bisect_formatted='bisect'
-    print "$bisect_formatted"
-    return 0
-  fi
-
-  return 1
+    git-info
+    unset _git_info_executing
 }
 
 # Turns off git-info for the current repository.
@@ -141,268 +105,6 @@ EOF
   return 0
 }
 add-zsh-trap INT _git-info-abort
-
-
-function +vi-git-prompt-info() {
-    # enable for profiling this function
-    #PS4='$(date "+%s.%N ($LINENO) + ")'
-    #set -x
-
-    # Extended globbing is needed to parse repository status.
-    setopt LOCAL_OPTIONS
-    setopt EXTENDED_GLOB
-
-    local action
-    local action_format
-    local action_formatted
-    local added=0
-    local added_format
-    local added_formatted
-    local ahead
-    local ahead_and_behind
-    local ahead_and_behind_cmd
-    local ahead_format
-    local ahead_formatted
-    local behind
-    local behind_format
-    local behind_formatted
-    local ahead_or_behind
-    local ahead_or_behind_format
-    local ahead_or_behind_formatted
-    local branch
-    local branch_format
-    local branch_formatted
-    local branch_info
-    local clean
-    local clean_formatted
-    local commit
-    local commit_format
-    local commit_formatted
-    local deleted=0
-    local deleted_format
-    local deleted_formatted
-    local dirty=0
-    local dirty_format
-    local dirty_formatted
-    local ignore_submodules
-    local -A info_formats
-    local info_format
-    local line_number=0
-    local modified=0
-    local modified_format
-    local modified_formatted
-    local position
-    local position_format
-    local position_formatted
-    local remote
-    local remote_cmd
-    local remote_format
-    local remote_formatted
-    local renamed=0
-    local renamed_format
-    local renamed_formatted
-    local stashed=0
-    local stashed_format
-    local stashed_formatted
-    local status_cmd
-    local unmerged=0
-    local unmerged_format
-    local unmerged_formatted
-    local untracked=0
-    local untracked_format
-    local untracked_formatted
-    local name
-    local name_format
-    local name_formatted
-
-    # Clean up previous $pvcs_info.
-    unset pvcs_info
-    typeset -gA pvcs_info
-
-    if ! is-true "${$(git config --bool prompt.showinfo):-true}"; then
-    echo "git info disabled use: git config --bool prompt.showinfo true"
-    return 1
-    fi
-
-    # Return if not inside a Git repository work tree.
-    if ! is-true "$(git rev-parse --is-inside-work-tree 2> /dev/null)"; then
-	return 1
-    fi
-
-    # Used to abort and turn git-info off on SIGINT.
-    _git_info_executing=true
-
-    # Use porcelain status for easy parsing.
-    status_cmd='git status --porcelain'
-
-    # Gets the remote name.
-    remote_cmd='git rev-parse --symbolic-full-name --verify HEAD@{upstream}'
-
-    # Gets the commit difference counts between local and remote.
-    ahead_and_behind_cmd='git rev-list --count --left-right HEAD...@{upstream}'
-
-    # Ignore submodule status.
-    zstyle -s ':prezto:module:vcs:status:ignore' submodules 'ignore_submodules'
-    if [[ -n "$ignore_submodules" ]]; then
-	status_cmd+=" --ignore-submodules=${ignore_submodules}"
-    fi
-
-    # Format commit.
-    commit="$(git rev-parse HEAD 2> /dev/null)"
-    if [[ -n "$commit" ]]; then
-	zstyle -s ':prezto:module:vcs:info:commit' format 'commit_format'
-	zformat -f commit_formatted "$commit_format" "c:$commit"
-    fi
-
-    # Format stashed.
-    if [[ -f "$(git-dir)/refs/stash" ]]; then
-	stashed="$(git stash list 2> /dev/null | wc -l | awk '{print $1}')"
-	zstyle -s ':prezto:module:vcs:info:stashed' format 'stashed_format'
-	zformat -f stashed_formatted "$stashed_format" "S:+S[$stashed]"
-    fi
-
-    # Format action.
-    action="$(_git-action)"
-    if [[ -n "$action" ]]; then
-	zstyle -s ':prezto:module:vcs:info:action' format 'action_format'
-	zformat -f action_formatted "$action_format" "s:$action"
-    fi
-
-    # Get current status.
-    while IFS=$'\n' read line; do
-	# Count added, deleted, modified, renamed, unmerged, untracked, dirty.
-	# T (type change) is undocumented, see http://git.io/FnpMGw.
-	# For a table of scenarii, see http://i.imgur.com/2YLu1.png.
-	[[ "$line" == ([ACMT][\ MT]|[ACMT]D)\ * ]] && (( added++ ))
-	[[ "$line" == ([\ ACMRT]D|D)\ * ]] && (( deleted++ ))
-	[[ "$line" == ?[MT]\ * ]] && (( modified++ ))
-	[[ "$line" == R?\ * ]] && (( renamed++ ))
-	[[ "$line" == (AA|DD|U?|?U)\ * ]] && (( unmerged++ ))
-	[[ "$line" == \?\?\ * ]] && (( untracked++ ))
-	(( dirty++ ))
-    done < <(${(z)status_cmd} 2> /dev/null)
-
-    # Format branch.
-    branch="${$(git symbolic-ref -q HEAD)##refs/heads/}"
-    if [[ -n "$branch" ]]; then
-	local ab=""
-	zstyle -s ':prezto:module:vcs:info:branch' format 'branch_format'
-	zformat -f branch_formatted "$branch_format" "b:$branch"
-
-	# Format remote.
-	remote="${$(${(z)remote_cmd} 2> /dev/null)##refs/remotes/}"
-	if [[ -n "$remote" ]]; then
-	    zstyle -s ':prezto:module:vcs:info:remote' format 'remote_format'
-	    zformat -f remote_formatted "$remote_format" "R:$remote"
-
-	    # Get ahead and behind counts.
-	    ahead_and_behind="$(${(z)ahead_and_behind_cmd} 2> /dev/null)"
-
-	    # Format ahead.
-	    ahead="$ahead_and_behind[(w)1]"
-	    if (( $ahead > 0 )); then
-		zstyle -s ':prezto:module:vcs:info:ahead' format 'ahead_format'
-		zformat -f ahead_formatted "$ahead_format" "A:+$ahead"
-		ab+="+$ahead"
-	    fi
-
-	    # Format behind.
-	    behind="$ahead_and_behind[(w)2]"
-	    if (( $behind > 0 )); then
-		zstyle -s ':prezto:module:vcs:info:behind' format 'behind_format'
-		zformat -f behind_formatted "$behind_format" "B:-$behind"
-		ab+="-$behind"
-	    fi
-	    if [[ -n "$ab" ]]; then
-		zstyle -s ':prezto:module:vcs:info:ahead_or_behind' format 'ahead_or_behind_format'
-		zformat -f ahead_or_behind_formatted "$ahead_or_behind_format" "Z:[$ab]"
-	    fi
-	fi
-    else
-	# Format position.
-	position="$(git describe --contains --all HEAD 2> /dev/null)"
-	if [[ -n "$position" ]]; then
-	    zstyle -s ':prezto:module:vcs:info:position' format 'position_format'
-	    zformat -f position_formatted "$position_format" "p:$position"
-	fi
-    fi
-
-    # Format added.
-    if (( $added > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:added' format 'added_format'
-	zformat -f added_formatted "$added_format" "a:$added_format"
-    fi
-
-    # Format deleted.
-    if (( $deleted > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:deleted' format 'deleted_format'
-	zformat -f deleted_formatted "$deleted_format" "d:$deleted_format"
-    fi
-
-    # Format modified.
-    if (( $modified > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:modified' format 'modified_format'
-	zformat -f modified_formatted "$modified_format" "m:$modified"
-    fi
-
-    # Format renamed.
-    if (( $renamed > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:renamed' format 'renamed_format'
-	zformat -f renamed_formatted "$renamed_format" "r:$renamed"
-    fi
-
-    # Format unmerged.
-    if (( $unmerged > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:unmerged' format 'unmerged_format'
-	zformat -f unmerged_formatted "$unmerged_format" "U:$unmerged"
-    fi
-
-    # Format untracked.
-    if (( $untracked > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:untracked' format 'untracked_format'
-	zformat -f untracked_formatted "$untracked_format" "u:$untracked"
-    fi
-
-    # Format dirty and clean.
-    if (( $dirty > 0 )); then
-	zstyle -s ':prezto:module:vcs:info:dirty' format 'dirty_format'
-	zformat -f dirty_formatted "$dirty_format" "D:$dirty"
-    else
-	zstyle -s ':prezto:module:vcs:info:clean' format 'clean_formatted'
-    fi
-
-    zstyle -s ':prezto:module:vcs:info:name' format 'name_format'
-    zformat -f name_formatted "$name_format" "v:$vcs"
-
-    # Format info.
-    zstyle -a ':prezto:module:vcs:info:keys' format 'info_formats'
-    for info_format in ${(k)info_formats}; do
-	zformat -f REPLY "$info_formats[$info_format]" \
-	    "A:$ahead_formatted" \
-	    "B:$behind_formatted" \
-	    "D:$dirty_formatted" \
-	    "R:$remote_formatted" \
-	    "S:$stashed_formatted" \
-	    "U:$unmerged_formatted" \
-	    "Z:$ahead_or_behind_formatted" \
-	    "a:$added_formatted" \
-	    "b:$branch_formatted" \
-	    "C:$clean_formatted" \
-	    "c:$commit_formatted" \
-	    "d:$deleted_formatted" \
-	    "m:$modified_formatted" \
-	    "p:$position_formatted" \
-	    "r:$renamed_formatted" \
-	    "s:$action_formatted" \
-	    "u:$untracked_formatted" \
-	    "v:$name_formatted"
-	pvcs_info[$info_format]="$REPLY"
-    done
-
-    unset REPLY
-    unset _git_info_executing
-
-}
 
 
 # Local Variables:
