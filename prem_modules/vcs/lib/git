@@ -32,7 +32,6 @@ function estyle-cfc() {
 
 # Useful to test values outside the hooks
 function +vi-git-init-hook-array() {
-    #my_hook_com=("${(@kv)hook_com}")
     for key in ${(k)hook_com}; do
 	my_hook_com[$key]=${hook_com[$key]}
     done
@@ -65,7 +64,6 @@ zstyle ':vcs_info:git*+pre-get-data:*' hooks \
     #show-hook-array
 
 zstyle ':vcs_info:git*+post-backend:*' hooks \
-    git-remotebranch \
     git-prompt-info \
     git-init-hook-array \
     #show-hook-array

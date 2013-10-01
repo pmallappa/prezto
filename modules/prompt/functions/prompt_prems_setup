@@ -117,9 +117,8 @@ function __reset__ {
 function prompt_vcs {
     #set -x
     __reset__
-    if [[ -n "${my_hook_com[vcs]}" ]]; then
-	echo -n " | "
-	prompt_segment "" 32 "${my_hook_com[vcs]}"
+    if [[ -n "${my_hook_com[vcsformatted]}" ]]; then
+	prompt_segment "" "" "${my_hook_com[vcsformatted]}"
     fi
     __reset__
 
@@ -158,13 +157,12 @@ function prompt_vcs {
 
 function build_prompt {
     #set -x
-    vcs_info
-
     RETVAL=$?
     prompt_dir
     prompt_vcs
     prompt_end
     prompt_end
+
 }
 
 function build_rprompt {
@@ -185,8 +183,8 @@ function _prompt_prems_chpwd() {
             ;;
     esac
     #if zstyle -t ':prezto:module:vcs' run 'yes'; then
-	#my_hook_com=()
-	vcs_info
+    #my_hook_com=()
+    #vcs_info
     #fi
 }
 
@@ -208,7 +206,7 @@ function __setup_vcs_style {
     () {
 	zstyle ':prezto:module:git:info' verbose 'yes'
 
-	zstyle ':prezto:module:(git*|hg*):vcs' format "| %%F{039}%v%%f"
+	zstyle ':prezto:module:(git*|hg*):vcsformatted' format "| %%F{039}%v%%f"
 
 	zstyle ':prezto:module:(git*|hg*):info:action' format ':%s'
 	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
@@ -236,7 +234,6 @@ function __setup_vcs_style {
 	    'branch'    '%b' \
 	    'remote'    '%R' \
 	    'stash'     '%S' \
-	    'vcsformatted' '%v' \
 	    'status'    '%U%C%a%d%m%r%u'
     }
 
@@ -283,7 +280,8 @@ function prompt_prems_setup {
     SEGMENT_SEPARATOR='|'
     #SEGMENT_RSEPARATOR='|'
 
-    PROMPT='%{%f%b%k%}$(build_prompt)
+    PROMPT='
+%{%f%b%k%}$(build_prompt)
 $(prompt_host) ${editor_info[keymap]}'
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 

@@ -40,29 +40,26 @@ function +vi-show-hook-array() {
 
 zstyle ':vcs_info:*+pre-get-data:*' hooks myvcs-pre-get-data
 +vi-myvcs-pre-get-data() {
-    ############
-    ## TODO
-    ######
-    # local my_vcs_format my_vcs_formatted
-    # local -A info_formats
-    # case $vcs in
-    # 	git*)
-    # 	    zstyle -s ':prezto:module:git:name' format 'my_vcs_format'
-    # 	    ;;
-    # 	hg*)
-    # 	    zstyle -s ':prezto:module:hg:name' format 'my_vcs_format'
-    # 	    ;;
-    # 	svn*)
-    # 	    zstyle -s ':prezto:module:svn:name' format 'my_vcs_format'
-    # 	    ;;
-    # 	*)
-    # 	    echo "RETURNING........."
-    # 	    return
-    # esac
+    local my_vcs_format my_vcs_formatted
+    local -A info_formats
+    case $vcs in
+    	git*)
+    	    zstyle -s ':prezto:module:git:vcs' format 'my_vcs_format'
+    	    ;;
+    	hg*)
+    	    zstyle -s ':prezto:module:hg:vcs' format 'my_vcs_format'
+    	    ;;
+    	svn*)
+    	    zstyle -s ':prezto:module:svn:vcs' format 'my_vcs_format'
+    	    ;;
+    	*)
+    	    echo "RETURNING........."
+    	    return
+    esac
 
-    # zformat -f my_vcs_formatted "$my_vcs_format" "v:$vcs"
-    # my_hook_com[name]="$my_vcs_formatted"
-############################
+    zformat -f my_vcs_formatted "$my_vcs_format" "v:$vcs"
+    my_hook_com[vcsformatted]="$my_vcs_formatted"
+    ############################
     # If the shell just started up or we changed directories (or for other
     # custom reasons) we must run vcs_info.
     if zstyle -t ':prezto:module:vcs' run 'yes'; then
@@ -70,23 +67,17 @@ zstyle ':vcs_info:*+pre-get-data:*' hooks myvcs-pre-get-data
         return
     fi
 
-    # If we got to this point, running vcs_info was not forced, so now we
-    # default to not running it and selectively choose when we want to run
-    ret=1
-    # it (ret=0 means run it, ret=1 means don't).
-
     # If a git/hg command was run then run vcs_info as the status might
     # need to be updated.
     case "$(fc -ln $(($HISTCMD-1)))" in
         git* | hg*)
-            ret=0
+            zstyle ':prezto:module:vcs' run 'yes'
             ;;
 	*)
-
 	    ;;
     esac
 
-    return ret
+    return
 }
 
 source $moddir/lib/git
