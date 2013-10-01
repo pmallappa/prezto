@@ -256,9 +256,7 @@ function __setup_vcs_style {
 }
 
 function prompt_prems_setup {
-    set -x
     # Load required functions.
-
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
 
