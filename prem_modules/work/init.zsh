@@ -1,6 +1,5 @@
-fpath=( $module_dir/functions $fpath )
-autoload -U $module_dir/functions/*(:t)
-
+fpath=( $moddir/functions $fpath )
+autoload -U $moddir/functions/*(:t)
 
 ###
 # Function used to boot PCI-e based NIC cards
