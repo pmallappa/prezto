@@ -27,6 +27,7 @@ function {
 # Do not want to dray all values behind, if the user changes
 # directories, we may change from one VCS to another
 function +vi-clear-hook-array() {
+    echo "clearing my_hook_com"
     my_hook_com=()
 }
 
@@ -39,26 +40,29 @@ function +vi-show-hook-array() {
 
 zstyle ':vcs_info:*+pre-get-data:*' hooks myvcs-pre-get-data
 +vi-myvcs-pre-get-data() {
-    local my_vcs_format my_vcs_formatted
-    local -A info_formats
-    case $vcs in
-	git*)
-	    zstyle -s ':prezto:module:git:name' format 'my_vcs_format'
-	    ;;
-	hg*)
-	    zstyle -s ':prezto:module:hg:name' format 'my_vcs_format'
-	    ;;
-	svn*)
-	    zstyle -s ':prezto:module:svn:name' format 'my_vcs_format'
-	    ;;
-	*)
-	    echo "RETURNING........."
-	    return
-    esac
+    ############
+    ## TODO
+    ######
+    # local my_vcs_format my_vcs_formatted
+    # local -A info_formats
+    # case $vcs in
+    # 	git*)
+    # 	    zstyle -s ':prezto:module:git:name' format 'my_vcs_format'
+    # 	    ;;
+    # 	hg*)
+    # 	    zstyle -s ':prezto:module:hg:name' format 'my_vcs_format'
+    # 	    ;;
+    # 	svn*)
+    # 	    zstyle -s ':prezto:module:svn:name' format 'my_vcs_format'
+    # 	    ;;
+    # 	*)
+    # 	    echo "RETURNING........."
+    # 	    return
+    # esac
 
-    zformat -f my_vcs_formatted "$my_vcs_format" "v:$vcs"
-    my_hook_com[name]="$my_vcs_formatted"
-
+    # zformat -f my_vcs_formatted "$my_vcs_format" "v:$vcs"
+    # my_hook_com[name]="$my_vcs_formatted"
+############################
     # If the shell just started up or we changed directories (or for other
     # custom reasons) we must run vcs_info.
     if zstyle -t ':prezto:module:vcs' run 'yes'; then

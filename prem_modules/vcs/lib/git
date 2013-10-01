@@ -59,7 +59,7 @@ function +vi-git-init-hook-array() {
 
 # Post-backend is called once, whereas set-message is called on every
 # message vcs_info_msg_X_. So save a few resources
-zstyle ':vcs_info:*+pre-get-data:*' hooks \
+zstyle ':vcs_info:git*+pre-get-data:*' hooks \
     clear-hook-array \
     myvcs-pre-get-data \
     #show-hook-array

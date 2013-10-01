@@ -17,6 +17,9 @@
 # Begin a segment
 # Takes two arguments, background and foreground. Both can be omitted,
 # rendering default background/foreground.
+autoload -Uz add-zsh-hook
+autoload -Uz vcs_info
+
 function prompt_segment() {
     local bg fg
     [[ -n $1 ]] && bg=${BG[$1]} || bg=${BG[none]}
@@ -114,7 +117,6 @@ function __reset__ {
 function prompt_vcs {
     #set -x
     __reset__
-
     if [[ -n "${my_hook_com[vcs]}" ]]; then
 	echo -n " | "
 	prompt_segment "" 32 "${my_hook_com[vcs]}"
@@ -155,6 +157,9 @@ function prompt_vcs {
 }
 
 function build_prompt {
+    #set -x
+    vcs_info
+
     RETVAL=$?
     prompt_dir
     prompt_vcs
@@ -171,7 +176,6 @@ function build_rprompt {
 
 # Must run vcs_info when changing directories.
 function _prompt_prems_chpwd() {
-    #set -x
     case "$(fc -ln $(($HISTCMD-1)))" in
         hg*|git*)
             zstyle ':prezto:module:vcs' run 'yes'
@@ -180,8 +184,8 @@ function _prompt_prems_chpwd() {
             zstyle ':prezto:module:vcs' run 'no'
             ;;
     esac
-
     #if zstyle -t ':prezto:module:vcs' run 'yes'; then
+	#my_hook_com=()
 	vcs_info
     #fi
 }
@@ -203,6 +207,8 @@ function __setup_vcs_style {
     ### Mark individual style
     () {
 	zstyle ':prezto:module:git:info' verbose 'yes'
+
+	zstyle ':prezto:module:(git*|hg*):vcs' format "| %%F{039}%v%%f"
 
 	zstyle ':prezto:module:(git*|hg*):info:action' format ':%s'
 	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
@@ -230,14 +236,24 @@ function __setup_vcs_style {
 	    'branch'    '%b' \
 	    'remote'    '%R' \
 	    'stash'     '%S' \
+	    'vcsformatted' '%v' \
 	    'status'    '%U%C%a%d%m%r%u'
+    }
+
+    ## Mercurial specific
+    () {
+	# VCS name in prompt
+	zstyle ':prezto:module:hg*:vcs' format "| %%F{039}%v%%f"
+    }
+
+    ## Git specific
+    () {
+	zstyle ':prezto:module:git*:vcs' format '| %%F{140}%v%%F'
     }
 }
 
 function prompt_prems_setup {
     # Load required functions.
-    autoload -Uz add-zsh-hook
-    autoload -Uz vcs_info
 
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
