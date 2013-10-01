@@ -106,26 +106,33 @@ function prompt_status() {
     [[ -n "$symbols" ]] && prompt_rsegment "" 247 "$symbols"
 }
 
+function __reset__ {
+    #prompt_segment "" "" ""
+    prompt_end
+}
+
 function prompt_vcs {
     #set -x
+    __reset__
+
     if [[ -n "${my_hook_com[vcs]}" ]]; then
 	echo -n " | "
 	prompt_segment "" 32 "${my_hook_com[vcs]}"
     fi
+    __reset__
 
     case ${my_hook_com[vcs]} in
 	git*|hg*)
 	    [[ -n "${my_hook_com[stash]}" ]] && \
 		prompt_segment "" "" "[${my_hook_com[stash]}]"
-	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
-		echo -n "["
-
-		[[ -n "${my_hook_com[ahead]}" ]] && \
-		    prompt_segment "" 185 "${my_hook_com[ahead]}"
-
-		[[ -n "${my_hook_com[behind]}" ]] && prompt_segment "" "" "/" &&    \
-		    prompt_segment "" 213 "${my_hook_com[behind]}"
-
+	    if [[ -n "${my_hook_com[ahead]}" && -n "${my_hook_com[behind]}" ]];	then
+		local sep="/"
+	    fi
+	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]];	then
+		prompt_segment "" "" "["
+		prompt_segment "" 185 "${my_hook_com[ahead]}"
+		prompt_segment "" "" "$sep"
+		prompt_segment "" 213 "${my_hook_com[behind]}"
 		prompt_segment "" "" "]"
 	    fi
 	    SEGMENT_SEPARATOR=""
@@ -258,7 +265,8 @@ function prompt_prems_setup {
     SEGMENT_SEPARATOR='|'
     #SEGMENT_RSEPARATOR='|'
 
-    PROMPT='%{%f%b%k%}$(build_prompt)
+    PROMPT='
+%{%f%b%k%}$(build_prompt)
 $(prompt_host) ${editor_info[keymap]}'
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 
