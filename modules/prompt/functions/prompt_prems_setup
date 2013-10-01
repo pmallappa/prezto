@@ -177,9 +177,9 @@ function build_rprompt {
 # Must run vcs_info when changing directories.
 function _prompt_prems_chpwd() {
     #set -x
-    #if zstyle -t ':prezto:module:vcs' run 'yes'; then
-    my_hook_com=()
-    vcs_info
+    zstyle ':prezto:module:vcs' run 'yes'
+    #my_hook_com=()
+    #vcs_info
     #fi
     #set +x
 }
@@ -199,7 +199,7 @@ function _prompt_prems_precmd {
     if zstyle -t ':prezto:module:vcs' run 'yes'; then
 	my_hook_com=()
 	vcs_info
-	zstyle -t ':prezto:module:vcs' run 'no'
+	zstyle ':prezto:module:vcs' run 'no'
     fi
     #set +x
 }
