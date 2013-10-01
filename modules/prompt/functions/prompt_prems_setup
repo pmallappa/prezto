@@ -156,7 +156,9 @@ function prompt_vcs {
 }
 
 function build_prompt {
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
     #set -x
+
     RETVAL=$?
     prompt_dir
     prompt_vcs
@@ -183,15 +185,19 @@ function _prompt_prems_chpwd() {
             ;;
     esac
     #if zstyle -t ':prezto:module:vcs' run 'yes'; then
-    #my_hook_com=()
-    #vcs_info
+    my_hook_com=()
+    vcs_info
     #fi
 }
 
 function _prompt_prems_precmd {
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
     #set -x
-    my_hook_com=()
-    vcs_info
+    if zstyle -t ':prezto:module:vcs' run 'yes'; then
+	my_hook_com=()
+	vcs_info
+	zstyle -t ':prezto:module:vcs' run 'no'
+    fi
 }
 
 function __setup_vcs_style {
@@ -250,6 +256,7 @@ function __setup_vcs_style {
 }
 
 function prompt_prems_setup {
+    set -x
     # Load required functions.
 
     setopt LOCAL_OPTIONS

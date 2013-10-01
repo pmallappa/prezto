@@ -6,7 +6,7 @@ typeset -xA my_hook_com
 ######
 ## Heart of vcs_info
 ######
-function {
+() {
     local enabled
     local disabled
     zstyle -a ':prezto:module:vcs' enabled 'enabled'
@@ -64,20 +64,7 @@ zstyle ':vcs_info:*+pre-get-data:*' hooks myvcs-pre-get-data
     # custom reasons) we must run vcs_info.
     if zstyle -t ':prezto:module:vcs' run 'yes'; then
 	zstyle ':prezto:module:vcs' run 'no'
-        return
     fi
-
-    # If a git/hg command was run then run vcs_info as the status might
-    # need to be updated.
-    case "$(fc -ln $(($HISTCMD-1)))" in
-        git* | hg*)
-            zstyle ':prezto:module:vcs' run 'yes'
-            ;;
-	*)
-	    ;;
-    esac
-
-    return
 }
 
 source $moddir/lib/git
