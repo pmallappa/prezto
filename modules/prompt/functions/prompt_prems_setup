@@ -128,11 +128,12 @@ function prompt_vcs {
 	    if [[ -n "${my_hook_com[ahead]}" && -n "${my_hook_com[behind]}" ]];	then
 		local sep="/"
 	    fi
-	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]];	then
+	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
 		prompt_segment "" "" "["
-		prompt_segment "" 185 "${my_hook_com[ahead]}"
+		    prompt_segment "" 185 "${my_hook_com[ahead]}"
 		prompt_segment "" "" "$sep"
-		prompt_segment "" 213 "${my_hook_com[behind]}"
+		    prompt_segment "" 213 "${my_hook_com[behind]}"
+
 		prompt_segment "" "" "]"
 	    fi
 	    SEGMENT_SEPARATOR=""
@@ -180,12 +181,13 @@ function _prompt_prems_chpwd() {
             ;;
     esac
 
-    if zstyle -t ':prezto:module:vcs' run 'yes'; then
+    #if zstyle -t ':prezto:module:vcs' run 'yes'; then
 	vcs_info
-    fi
+    #fi
 }
 
 function _prompt_prems_precmd {
+    #set -x
     my_hook_com=()
     vcs_info
 }
@@ -265,8 +267,7 @@ function prompt_prems_setup {
     SEGMENT_SEPARATOR='|'
     #SEGMENT_RSEPARATOR='|'
 
-    PROMPT='
-%{%f%b%k%}$(build_prompt)
+    PROMPT='%{%f%b%k%}$(build_prompt)
 $(prompt_host) ${editor_info[keymap]}'
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 
