@@ -6,7 +6,7 @@ typeset -xA my_hook_com
 ######
 ## Heart of vcs_info
 ######
-function {
+() {
     local enabled
     local disabled
     zstyle -a ':prezto:module:vcs' enabled 'enabled'
@@ -24,6 +24,13 @@ function {
 
 }
 
+# Do not want to dray all values behind, if the user changes
+# directories, we may change from one VCS to another
+function +vi-clear-hook-array() {
+    echo "clearing my_hook_com"
+    my_hook_com=()
+}
+
 function +vi-show-hook-array() {
     for key in ${(k)my_hook_com}
     do
@@ -31,35 +38,33 @@ function +vi-show-hook-array() {
     done
 }
 
-zstyle ':vcs_info:*+pre-get-data:*' hooks pre-get-data
-+vi-pre-get-data() {
-    # Only Git and Mercurial support and need caching.
-    [[ "$vcs" != git && "$vcs" != hg ]] && return
+zstyle ':vcs_info:*+pre-get-data:*' hooks myvcs-pre-get-data
++vi-myvcs-pre-get-data() {
+    local my_vcs_format my_vcs_formatted
+    local -A info_formats
+    case $vcs in
+    	git*)
+    	    zstyle -s ':prezto:module:git:vcs' format 'my_vcs_format'
+    	    ;;
+    	hg*)
+    	    zstyle -s ':prezto:module:hg:vcs' format 'my_vcs_format'
+    	    ;;
+    	svn*)
+    	    zstyle -s ':prezto:module:svn:vcs' format 'my_vcs_format'
+    	    ;;
+    	*)
+    	    echo "RETURNING........."
+    	    return
+    esac
 
+    zformat -f my_vcs_formatted "$my_vcs_format" "v:$vcs"
+    my_hook_com[vcsformatted]="$my_vcs_formatted"
+    ############################
     # If the shell just started up or we changed directories (or for other
     # custom reasons) we must run vcs_info.
     if zstyle -t ':prezto:module:vcs' run 'yes'; then
 	zstyle ':prezto:module:vcs' run 'no'
-        return
     fi
-
-    # If we got to this point, running vcs_info was not forced, so now we
-    # default to not running it and selectively choose when we want to run
-    ret=1
-    # it (ret=0 means run it, ret=1 means don't).
-
-    # If a git/hg command was run then run vcs_info as the status might
-    # need to be updated.
-    case "$(fc -ln $(($HISTCMD-1)))" in
-        git* | hg*)
-            ret=0
-            ;;
-	*)
-
-	    ;;
-    esac
-
-    return ret
 }
 
 source $moddir/lib/git

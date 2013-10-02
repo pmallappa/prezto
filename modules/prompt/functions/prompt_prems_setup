@@ -17,6 +17,9 @@
 # Begin a segment
 # Takes two arguments, background and foreground. Both can be omitted,
 # rendering default background/foreground.
+autoload -Uz add-zsh-hook
+autoload -Uz vcs_info
+
 function prompt_segment() {
     local bg fg
     [[ -n $1 ]] && bg=${BG[$1]} || bg=${BG[none]}
@@ -106,24 +109,30 @@ function prompt_status() {
     [[ -n "$symbols" ]] && prompt_rsegment "" 247 "$symbols"
 }
 
+function __reset__ {
+    #prompt_segment "" "" ""
+    prompt_end
+}
+
 function prompt_vcs {
     #set -x
-    if [[ -n "${my_hook_com[vcs]}" ]]; then
-	echo -n " | "
-	prompt_segment "" 32 "${my_hook_com[vcs]}"
+    __reset__
+    if [[ -n "${my_hook_com[vcsformatted]}" ]]; then
+	prompt_segment "" "" "${my_hook_com[vcsformatted]}"
     fi
+    __reset__
 
     case ${my_hook_com[vcs]} in
 	git*|hg*)
 	    [[ -n "${my_hook_com[stash]}" ]] && \
 		prompt_segment "" "" "[${my_hook_com[stash]}]"
+	    if [[ -n "${my_hook_com[ahead]}" && -n "${my_hook_com[behind]}" ]];	then
+		local sep="/"
+	    fi
 	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
-		echo -n "["
-
-		[[ -n "${my_hook_com[ahead]}" ]] && \
+		prompt_segment "" "" "["
 		    prompt_segment "" 185 "${my_hook_com[ahead]}"
-
-		[[ -n "${my_hook_com[behind]}" ]] && prompt_segment "" "" "/" &&    \
+		prompt_segment "" "" "$sep"
 		    prompt_segment "" 213 "${my_hook_com[behind]}"
 
 		prompt_segment "" "" "]"
@@ -147,11 +156,15 @@ function prompt_vcs {
 }
 
 function build_prompt {
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
+    #set -x
+
     RETVAL=$?
     prompt_dir
     prompt_vcs
     prompt_end
     prompt_end
+
 }
 
 function build_rprompt {
@@ -164,6 +177,16 @@ function build_rprompt {
 # Must run vcs_info when changing directories.
 function _prompt_prems_chpwd() {
     #set -x
+    zstyle ':prezto:module:vcs' run 'yes'
+    #my_hook_com=()
+    #vcs_info
+    #fi
+    #set +x
+}
+
+function _prompt_prems_precmd {
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
+    #set -x
     case "$(fc -ln $(($HISTCMD-1)))" in
         hg*|git*)
             zstyle ':prezto:module:vcs' run 'yes'
@@ -174,13 +197,11 @@ function _prompt_prems_chpwd() {
     esac
 
     if zstyle -t ':prezto:module:vcs' run 'yes'; then
+	my_hook_com=()
 	vcs_info
+	zstyle ':prezto:module:vcs' run 'no'
     fi
-}
-
-function _prompt_prems_precmd {
-    my_hook_com=()
-    vcs_info
+    #set +x
 }
 
 function __setup_vcs_style {
@@ -194,6 +215,8 @@ function __setup_vcs_style {
     ### Mark individual style
     () {
 	zstyle ':prezto:module:git:info' verbose 'yes'
+
+	zstyle ':prezto:module:(git*|hg*):vcsformatted' format "| %%F{039}%v%%f"
 
 	zstyle ':prezto:module:(git*|hg*):info:action' format ':%s'
 	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
@@ -223,13 +246,21 @@ function __setup_vcs_style {
 	    'stash'     '%S' \
 	    'status'    '%U%C%a%d%m%r%u'
     }
+
+    ## Mercurial specific
+    () {
+	# VCS name in prompt
+	zstyle ':prezto:module:hg*:vcs' format "| %%F{039}%v%%f"
+    }
+
+    ## Git specific
+    () {
+	zstyle ':prezto:module:git*:vcs' format '| %%F{140}%v%%F'
+    }
 }
 
 function prompt_prems_setup {
     # Load required functions.
-    autoload -Uz add-zsh-hook
-    autoload -Uz vcs_info
-
     setopt LOCAL_OPTIONS
     unsetopt XTRACE KSH_ARRAYS
 
@@ -258,7 +289,8 @@ function prompt_prems_setup {
     SEGMENT_SEPARATOR='|'
     #SEGMENT_RSEPARATOR='|'
 
-    PROMPT='%{%f%b%k%}$(build_prompt)
+    PROMPT='
+%{%f%b%k%}$(build_prompt)
 $(prompt_host) ${editor_info[keymap]}'
     RPROMPT=' %{%f%b%k%}$(build_rprompt)'
 

@@ -30,15 +30,11 @@ function estyle-cfc() {
     return 1
 }
 
-# Do not want to dray all values behind, if the user changes
-# directories, we may change from one VCS to another
-function +vi-clear-hook-array() {
-	my_hook_com=()
-}
-
 # Useful to test values outside the hooks
 function +vi-git-init-hook-array() {
-    my_hook_com=("${(@kv)hook_com}")
+    for key in ${(k)hook_com}; do
+	my_hook_com[$key]=${hook_com[$key]}
+    done
     for key in ${(k)git_info}; do
 	my_hook_com[$key]=${git_info[$key]}
     done
@@ -62,11 +58,12 @@ function +vi-git-init-hook-array() {
 
 # Post-backend is called once, whereas set-message is called on every
 # message vcs_info_msg_X_. So save a few resources
-zstyle ':vcs_info:*+pre-get-data:*' hooks \
-	clear-hook-array
+zstyle ':vcs_info:git*+pre-get-data:*' hooks \
+    clear-hook-array \
+    myvcs-pre-get-data \
+    #show-hook-array
 
 zstyle ':vcs_info:git*+post-backend:*' hooks \
-    git-remotebranch \
     git-prompt-info \
     git-init-hook-array \
     #show-hook-array
@@ -74,9 +71,6 @@ zstyle ':vcs_info:git*+post-backend:*' hooks \
 function +vi-git-prompt-info() {
     # enable for profiling this function
     #PS4='$(date "+%s.%N ($LINENO) + ")'
-    if (( $+function[git-info] )); then
-        git-info
-    fi
     git-info
     unset _git_info_executing
 }

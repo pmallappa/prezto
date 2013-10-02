@@ -150,5 +150,3 @@ function {
     fpath=(${ZDOTDIR:-${HOME}/".zprezto"}/functions(/FN) $fpath)
     autoload -U ${fpath[1]}/*(:t)
 }
-
-
