@@ -1,6 +1,6 @@
 ### osx / zeesh! plugin
 
- Return if requirements are not found.
+# Return if requirements are not found.
 if [[ "$OSTYPE" != darwin* ]]; then
   return 1
 fi

@@ -133,17 +133,19 @@ zstyle -a ':prezto:load' zfunction 'zfunctions'
 for zfunction ("$zfunctions[@]") autoload -Uz "$zfunction"
 unset zfunction{s,}
 
-# Load Prezto modules.
-zstyle -a ':prezto:load' pmodule 'pmodules'
-pmodload "$pmodules[@]"
-unset pmodules
-
 #set -x
 # Load Prems modules, override anything that is not needed
 zstyle -a ':prems:load' pmodule 'pmodules'
 ZMODDIR="${ZDOTDIR:-$HOME/.zprezto}/prem_modules"
 pmodload "$pmodules[@]"
 unset pmodules
+
+# Load Prezto modules.
+ZMODDIR="${ZDOTDIR:-$HOME/.zprezto}/modules"
+zstyle -a ':prezto:load' pmodule 'pmodules'
+pmodload "$pmodules[@]"
+unset pmodules
+
 unset ZMODDIR
 
 function {

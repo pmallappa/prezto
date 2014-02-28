@@ -95,6 +95,9 @@ function prompt_host {
     esac
     #CURRENT_BG="$bg"
     prompt_segment "" $bg $host
+    if [[ -n "$SCHROOT_SESSION_ID" ]]; then
+	prompt_segment "" red " [chroot]"
+    fi
 }
 
 

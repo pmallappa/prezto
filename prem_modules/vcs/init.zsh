@@ -1,5 +1,8 @@
 autoload -U add-zsh-hook
 
+ZMODDIR="${ZDOTDIR:-$HOME/.zprezto}/modules"
+pmodload git
+
 # Need a global associative array we can access from format
 typeset -xA my_hook_com
 

@@ -22,7 +22,7 @@ last-modified(){
     stat -c '%Y' $1
 }
 
-eval `dircolors ${HOME}/.dircolors/256colors-dark`
+eval `dircolors ${HOME}/.dircolors/256-dark`
 
 ###
 # PATHs

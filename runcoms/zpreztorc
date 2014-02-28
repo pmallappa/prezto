@@ -30,18 +30,10 @@ zstyle ':prezto:load' pmodule \
   'history' \
   'directory' \
   'spectrum' \
+  'tmux' \
   'utility' \
   'completion' \
-  'archive' \
-  'fasd' \
-  'osx' \
-  'tmux' \
-  'ruby' \
-  'prompt' \
-  'git' \
-  'plan9port' \
-  'syntax-highlighting' \
-#  'history-substring-search' \
+  'prompt'
 
 #
 # Editor
@@ -114,7 +106,7 @@ zstyle ':prezto:module:prompt' theme 'prems'
 # zstyle ':prezto:module:screen:auto-start' remote 'yes'
 
 #
-# GPG-Agent
+# SSH
 #
 
 # Enable SSH-Agent protocol emulation.
@@ -149,14 +141,19 @@ zstyle ':prezto:module:syntax-highlighting' highlighters \
 #   'builtin' 'bg=blue' \
 #   'command' 'bg=blue' \
 #   'function' 'bg=blue'
-#
 
 #
 # Terminal
 #
 
 # Auto set the tab and window titles.
-zstyle ':prezto:module:terminal' auto-title 'yes'
+# zstyle ':prezto:module:terminal' auto-title 'yes'
+
+# Set the window title format.
+# zstyle ':prezto:module:terminal:window-title' format '%n@%m: %s'
+
+# Set the tab title format.
+# zstyle ':prezto:module:terminal:tab-title' format '%m: %s'
 
 #
 # Tmux
@@ -183,11 +180,13 @@ zstyle ':prems:load' pmodule \
   'vcs'
 
 ## Prompt
-#zstyle ':prems:module:prompt' theme 'prems'
+zstyle ':prems:module:prompt' theme 'prems'
 
 ## Tmux
 #zstyle ':prems:module:tmux' exe ''
-zstyle ':prems:module:tmux' default_session 'office'
+zstyle ':prems:module:tmux' default-session 'office'
+zstyle ':prems:module:tmux' emacs-window '5'
+
 
 zstyle ':prems:module:tmux:session:office' window_list \
   'SDK'    \
