@@ -9,8 +9,8 @@ fi
 [ -z $t ] && t=`which tmux 2>/dev/null` && zstyle ":prems:module:tmux" exe "$t"
 
 
-zstyle ":prems:module:tmux" emacs-window 'ew'
-zstyle ":prems:module:tmux" session-name 'ts'
+zstyle -s ":prems:module:tmux" emacs-window 'ew'
+zstyle -s ":prems:module:tmux" session-name 'ts'
 
 #local ew=`$t list-windows -t $ts 2>/dev/null |  awk -F: '/emacs/ {print $1}'`
 

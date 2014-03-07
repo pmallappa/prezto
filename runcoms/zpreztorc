@@ -158,6 +158,9 @@ zstyle ':prezto:module:syntax-highlighting' highlighters \
 #
 # Tmux
 #
+zstyle ':prems:module:tmux' emacs_window '5'
+zstyle ':prems:module:tmux' default_session 'office'
+
 
 # Auto start a session when Zsh is launched in a local terminal.
 # zstyle ':prezto:module:tmux:auto-start' local 'yes'
