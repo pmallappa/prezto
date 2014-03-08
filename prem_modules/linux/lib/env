@@ -1,12 +1,22 @@
-
-export GOROOT=${HOME}/devel/compilers/goroot
-export GOARCH=amd64
-export GOOS=linux
-export GOBIN=${GOROOT}/bin
+#
+# All the Linux related initialization
+#
 
 if [ -e /usr/local/plan9 ]; then
 	path+=/usr/local/plan9/bin
 	export PLAN9=/usr/local/plan9
+fi
+
+if (( $+commands[go] )); then
+	go env | while read line; do
+		[[ "$line" =~ "TERM*" ]] && continue
+		eval export $line
+	done
+else
+	export GOROOT=${HOME}/devel/compilers/goroot
+	export GOARCH=amd64
+	export GOOS=linux
+	export GOBIN=${GOROOT}/bin
 fi
 
 export VISUAL="${EMACS} -q -nw -eval \"(progn (setq inhibit-startup-message t)(global-font-lock-mode t))\""
