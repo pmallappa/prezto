@@ -1,16 +1,17 @@
 Prezto — Instantly Awesome Zsh
 ==============================
 
-Prezto is the configuration framework for Zsh it enriches the command line
+Prezto is the configuration framework for [Zsh][1]; it enriches the command line
 interface environment with sane defaults, aliases, functions, auto completion,
 and prompt themes.
 
-This is my personal fork of the original by @sorin-ionescu – you should fork and modify his repository if you're interested in using Prezto. Installation and usage instructions can also be found on his page https://github.com/sorin-ionescu/prezto
+Installation
+------------
 
-Change List
------------
+Prezto will work with any recent release of Zsh, but the minimum recommended
+version is 4.3.11.
 
-These are the changes I've made from the original.
+  1. Launch Zsh:
 
         zsh
 
@@ -35,7 +36,7 @@ These are the changes I've made from the original.
 ### Troubleshooting
 
 If you are not able to find certain commands after switching to *Prezto*,
-modify the `PATH` variable in *~/.zshenv* then open a new Zsh terminal
+modify the `PATH` variable in *~/.zprofile* then open a new Zsh terminal
 window or tab.
 
 Updating
@@ -84,7 +85,8 @@ License
 
 (The MIT License)
 
-Copyright (c) 2009-2012 Robby Russell, Sorin Ionescu, and contributors.
+Copyright (c) 2009-2011 Robby Russell and contributors.
+Copyright (c) 2011-2014 Sorin Ionescu and contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

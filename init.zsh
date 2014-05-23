@@ -11,7 +11,7 @@
 #
 
 # Check for the minimum supported version.
-min_zsh_version='4.3.10'
+min_zsh_version='4.3.11'
 if ! autoload -Uz is-at-least || ! is-at-least "$min_zsh_version"; then
   print "prezto: old shell detected, minimum required: $min_zsh_version" >&2
   return 1
@@ -44,7 +44,7 @@ path_remove () { env_remove PATH $1; }
 function pmodload {
   local -a pmodules
   local pmodule
-  local pfunction_glob='^([_.]*|prompt_*_setup|README*)(.N:t)'
+  local pfunction_glob='^([_.]*|prompt_*_setup|README*)(-.N:t)'
   local zd=${ZDOTDIR:-${HOME}}
   local modulesdir=${ZMODDIR:-${zd}/".zprezto/modules"}
 
