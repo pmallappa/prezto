@@ -28,6 +28,7 @@ eval `dircolors ${HOME}/.dircolors/256-dark`
 # PATHs
 ###
 path+=(				
+/tools/bin
 ${HOME}/devel/compilers/goroot/bin
 /usr/local/llvm/bin 
 $plugin_dir/bin/`uname -m`
