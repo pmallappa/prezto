@@ -5,11 +5,11 @@ if [[ "$OSTYPE" != darwin* ]]; then
   return 1
 fi
 
-fpath=( $module_dir/functions $fpath )
-autoload -U $module_dir/functions/*(:t)
+fpath=( $moddir/functions $fpath )
+autoload -U $moddir/functions/*(:t)
 
-source $module_dir/lib/env
-source $module_dir/lib/aliases
+source $moddir/lib/env
+source $moddir/lib/aliases
 
 # no core dumps
 limit core 0
@@ -21,7 +21,7 @@ export LSCOLORS=ExfxcxdxbxegedabagAcEx
 path+=(	
 	/usr/local/share/ruby
 	/usr/local/share/python 
-	$module_dir/bin	
+	$moddir/bin	
 	/Developer/usr/bin
 	/usr/local/homebrew/bin
 )
