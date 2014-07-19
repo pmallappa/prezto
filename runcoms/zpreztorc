@@ -173,6 +173,7 @@ zstyle ':prems:module:tmux' default_session 'office'
 # Set the Prezto modules to load (browse modules).
 # The order matters.
 zstyle ':prems:load' pmodule \
+  'z' \
   'freebsd' \
   'osx' \
   'linux' \
