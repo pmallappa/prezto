@@ -51,23 +51,23 @@ function prompt_rsegment() {
     [[ -n $1 ]] && bg=${BG[$1]} || bg=${BG[none]}
     [[ -n $2 ]] && fg=${FG[$2]} || fg=${FG[none]}
     if [[ $1 != $CURRENT_BG ]]; then
-	echo -n  "%{${FG[$1]}%}${SEGMENT_RSEPARATOR}%{${bg}%}%{${fg}%} "
+	echo -n  "%{$fg%}${SEGMENT_RSEPARATOR}%{${bg}%}%{${fg}%}"
     else
-	echo -n  "%{$bg%}%{$fg%} "
+	echo -n  "%{$bg%}%{$fg%}"
     fi
-    CURRENT_BG=$1
-    [[ -n $3 ]] && echo -n  $3
+    CURRENT_BG=$bg
+    [[ -n $3 ]] && echo -n $3
 }
 
 # End the rprompt, closing any open segments
 function prompt_rend() {
     if [[ -n $CURRENT_BG ]]; then
-	echo " %{${BG[none]}$FG[$CURRENT_BG]%}"
+	echo -n " %{${BG[none]}%}%{$FG[$CURRENT_BG]%}"
     else
-	echo "%{${BG[none]}%}"
+	echo -n "%{${BG[none]}%}"
     fi
-    echo "%{${FG[none]}%}"
-    CURRENT_BG=''
+    echo -n "%{${FG[none]}%}"
+    CURRENT_BG=NONE
 }
 
 function prompt_dir {
@@ -105,7 +105,8 @@ function prompt_status() {
     local symbols
     local j
     symbols=()
-    [[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
+	#[[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
+    [[ $RETVAL -ne 0 ]] && symbols+="%{%B%F{red}%}X [$RETVAL]"
     [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}⚡"
     [[ $(jobs -l | wc -l) -gt 0 ]] && j="⚙ "
     [[ -n "$j" ]] && prompt_rsegment "" 208 "$j"
@@ -166,15 +167,13 @@ function build_prompt {
     prompt_dir
     prompt_vcs
     prompt_end
-    prompt_end
-
 }
 
 function build_rprompt {
     RETVAL=$?
     #prompt_git
     prompt_status
-#    prompt_rend
+    prompt_rend
 }
 
 # Must run vcs_info when changing directories.
@@ -295,7 +294,7 @@ function prompt_prems_setup {
     PROMPT='
 %{%f%b%k%}$(build_prompt)
 $(prompt_host) ${editor_info[keymap]}'
-    RPROMPT=' %{%f%b%k%}$(build_rprompt)'
+    RPROMPT='%{$reset_color%}$(build_rprompt)%{$reset_color%}'
 
     ## remove all that one-time definitions
     #unfunction __setup_vcs
