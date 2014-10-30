@@ -174,9 +174,10 @@ zstyle ':prems:module:tmux' default_session 'office'
 # The order matters.
 zstyle ':prems:load' pmodule \
   'z' \
+  'cygwin' \
   'freebsd' \
-  'osx' \
   'linux' \
+  'osx' \
   'virtualbox' \
   'work' \
   'vcs'
@@ -194,8 +195,9 @@ zstyle ':prems:module:tmux:session:office' window_list \
   'SDK'    \
   'Linux'  \
   'ttyUSB' \
-  'Misc'   \
-  'Emacs'
+  'VULCAN' \
+  'Emacs'  \
+  'TELNET' \
 
 zstyle ':prems:module:tmux:session:home'  window_list \
   'devel'  \
