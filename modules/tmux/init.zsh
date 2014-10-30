@@ -14,7 +14,8 @@ if (( ! $+commands[tmux] )); then
 fi
 
 local -a tmuxpath
-tmuxpath=('/usr/local/bin' 
+tmuxpath=('/tools/bin'
+    '/usr/local/bin' 
     '/usr/bin' 
     '/bin' 
     "$HOME/bin" )
