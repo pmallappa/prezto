@@ -71,6 +71,10 @@ if is-callable 'dircolors'; then
       eval "$(dircolors)"
     fi
 
+    if [ -z "$aliases[ls]" ]; then
+	aliases[ls]=ls
+    fi
+    #${aliases[ls]:=ls}
     alias ls="$aliases[ls] --color=auto"
   else
     alias ls="$aliases[ls] -F"
