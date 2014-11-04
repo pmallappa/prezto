@@ -18,28 +18,21 @@ _ssh_agent_env="${_ssh_agent_env:-${TMPDIR:-/tmp}/ssh-agent.env}"
 
 # Set the path to the persistent authentication socket.
 _ssh_agent_sock="${TMPDIR:-/tmp}/ssh-agent.sock"
-
-trim() {
-    local var=$@
-    var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
-    var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
-    echo -n "$var"
-}
-
-psargs=""
+pscmd=""
 # Start ssh-agent if not started.
 if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
   # Export environment variables.
   source "$_ssh_agent_env" 2> /dev/null
   case $OSTYPE in
-    *darwin*|*linux*|*bsd* )
-  	psargs="-U $USER -o pid,ucomm";;
-    *cygwin* )
-        psargs="-u"`trim $USER`;;
-    * ) ;;
+    *darwin* | *linux* | *bsd*)
+  	pscmd="ps -u $USER"
+	pscmd+=" -o pid,ucomm";;
+    *cygwin*)
+        pscmd="ps -u"`trim $USER`;;
+    *) ;;
   esac
   # Start ssh-agent if not started.
-  if ! ps $psargs | grep ssh-agent | grep -q "${SSH_AGENT_PID}"; then
+  if ! eval "$pscmd" | grep ssh-agent | grep -q "${SSH_AGENT_PID}"; then
     eval "$(ssh-agent | sed '/^echo /d' | tee "$_ssh_agent_env")"
   fi
 fi
@@ -59,7 +52,6 @@ if ssh-add -l 2>&1 | grep -q 'The agent has no identities'; then
     ssh-add 2> /dev/null
   fi
 fi
-
 # Clean up.
 unset _ssh_{dir,identities} _ssh_agent_{env,sock}
 
