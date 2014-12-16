@@ -13,7 +13,8 @@ if (( ${#sessions} > 1 )); then
     read s
 fi
 
-if [ "X$s" == "X" ]; then
+echo $s 
+if [ "X$s" ! ="X" ]; then
    if [ "X$curses" == "X" ]; then
 	echo "Not running inside TMUX, You must select a session" && return
    fi

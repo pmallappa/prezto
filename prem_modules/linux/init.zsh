@@ -46,8 +46,8 @@ if [ "$PS1" ]; then
 	fi
 fi
 
-EMACS=`which emacs`
-EMACSCLIENT=`which emacsclient`
+export EMACS=`which emacs`
+export EMACSCLIENT=`which emacsclient`
 
 case `hostname` in
 	*vm)
