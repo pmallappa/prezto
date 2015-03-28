@@ -107,8 +107,8 @@ function prompt_status() {
     symbols=()
 	#[[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
     [[ $RETVAL -ne 0 ]] && symbols+="%{%B%F{red}%}X [$RETVAL]"
-    [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}⚡"
-    [[ $(jobs -l | wc -l) -gt 0 ]] && j="⚙ "
+    [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}ROOT"
+    [[ $(jobs -l | wc -l) -gt 0 ]] && j="&"
     [[ -n "$j" ]] && prompt_rsegment "" 208 "$j"
     [[ -n "$symbols" ]] && prompt_rsegment "" 247 "$symbols"
 }

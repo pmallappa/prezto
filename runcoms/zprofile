@@ -16,9 +16,17 @@ fi
 #
 # Editors
 #
-
-export EDITOR='nano'
-export VISUAL='nano'
+if (( $+commands[vim] )); then
+	edi_tor='vim'
+elif (( $+commands[vi] )); then
+	edi_tor='vi'
+elif (( $+commands[nano] )); then
+	edi_tor='nano'
+fi
+	
+export EDITOR=$edi_tor
+export VISUAL=$edi_tor
+unset $edi_tor
 export PAGER='less'
 
 #
