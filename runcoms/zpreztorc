@@ -31,6 +31,7 @@ zstyle ':prezto:load' pmodule \
   'directory' \
   'spectrum' \
   'tmux' \
+  'gpg' \
   'ssh' \
   'utility' \
   'completion' \
@@ -192,12 +193,12 @@ zstyle ':prems:module:tmux' emacs-window '5'
 
 
 zstyle ':prems:module:tmux:session:office' window_list \
-  'SDK'    \
+  'VULCAN'    \
   'Linux'  \
-  'ttyUSB' \
-  'VULCAN' \
+  'SMMU' \
+  'MISC' \
   'Emacs'  \
-  'TELNET' \
+  'QEMU' \
 
 zstyle ':prems:module:tmux:session:home'  window_list \
   'devel'  \

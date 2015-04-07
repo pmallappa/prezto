@@ -1,8 +1,12 @@
 # freebsd zshfu plugin
 
-if [ "X"`uname` != "Xfreebsd" ]; then
-    return 0
-fi
+case $OSTYPE in
+	{FreeBSD,FREEBSD,Freebsd}*);;
+	*)return 1;;
+esac
+
+fpath=( $moddir/functions $fpath )
+autoload -U $moddir/functions/*(:t)
 
 export LSCOLORS=ExfxcxdxbxegedabagAcEx
 alias ls='ls -GF'
