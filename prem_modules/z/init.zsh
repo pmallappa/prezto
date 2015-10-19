@@ -11,7 +11,6 @@ function set_go_paths() {
     else
 
 	for p in $goroot_paths; do
-	    echo $p
 	    [ -e "$p/bin/go" ] && export GOROOT=$p && break
 	done
 	

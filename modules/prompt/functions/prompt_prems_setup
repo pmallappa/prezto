@@ -106,9 +106,9 @@ function prompt_status() {
     local j
     symbols=()
 	#[[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
-    [[ $RETVAL -ne 0 ]] && symbols+="%{%B%F{red}%}X [$RETVAL]"
+    [[ $RETVAL -ne 0 ]] && symbols+="%{%B%F{red}%}X[$RETVAL]"
     [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}ROOT"
-    [[ $(jobs -l | wc -l) -gt 0 ]] && j="&"
+    [[ $(jobs -l | wc -l) -gt 0 ]] && j="& "
     [[ -n "$j" ]] && prompt_rsegment "" 208 "$j"
     [[ -n "$symbols" ]] && prompt_rsegment "" 247 "$symbols"
 }
@@ -149,8 +149,10 @@ function prompt_vcs {
 
 	    [[ -n "${my_hook_com[status]}" ]] && \
 		prompt_segment "" "" " |${my_hook_com[status]}"
-	    ;;
 
+	    [[ -n "${my_hook_com[action]}" ]] && \
+		prompt_segment "" "" " ${my_hook_com[action]}"
+	    ;;
 	*)
 	    echo -n "$vcs_info_msg_0_"
 	    return
@@ -234,6 +236,7 @@ function __setup_vcs_style {
 	zstyle ':prezto:module:(git*|hg*):info:stashed' format  '%%B%%F{141}*%%f%%b'
 	zstyle ':prezto:module:(git*|hg*):info:unmerged' format  '═ '
 	zstyle ':prezto:module:(git*|hg*):info:untracked' format '%%F{95} ●%%f '
+	zstyle ':prezto:module:git:info:action' format '[%%F{226}%s%%f] '
 
 	zstyle ':prezto:module:(git*|hg*):info:keys' format \
 	    'ahead'     '%A' \
@@ -246,7 +249,8 @@ function __setup_vcs_style {
 	    'branch'    '%b' \
 	    'remote'    '%R' \
 	    'stash'     '%S' \
-	    'status'    '%U%C%a%d%m%r%u'
+	    'status'    '%U%C%a%d%m%r%u' \
+	    'action'    '%s'
     }
 
     ## Mercurial specific
