@@ -53,11 +53,11 @@ prompt_yadu_preprompt_render() {
 	[[ -n ${prompt_yadu_cmd_timestamp+x} && "$1" != "precmd" ]] && return
 
 	# set color for git branch/dirty status, change color if dirty checking has been delayed
-	local git_color=242
+	local git_color=015
 	[[ -n ${prompt_yadu_git_delay_dirty_check+x} ]] && git_color=red
 
 	# construct prompt, beginning with path
-	local prompt="%F{blue}%~%f"
+	local prompt="%F{178}%~%f"
 	# git info
 	prompt+="%F{$git_color}${prompt_yadu_git_dirty}%f"
 	# git pull/push arrows
@@ -245,12 +245,10 @@ function __setup_vcs_style {
 	zstyle ':prezto:module:git:info' verbose 'yes'
 
 	zstyle ':prezto:module:(git*|hg*):vcsformatted' format "| %%F{039}%v%%f"
-
-	zstyle ':prezto:module:(git*|hg*):info:action' format ':%s'
 	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
 	zstyle ':prezto:module:(git*|hg*):info:ahead' format  '+%A'
 	zstyle ':prezto:module:(git*|hg*):info:behind' format  '-%B'
-	zstyle ':prezto:module:(git*|hg*):info:branch' format ': %%F{111}%b%%f'
+	zstyle ':prezto:module:(git*|hg*):info:branch' format '%%F{015}%%f: %%F{111}%b%%f'
 	zstyle ':prezto:module:(git*|hg*):info:remote' format ' => %%F{67}%R%%f'
 	zstyle ':prezto:module:(git*|hg*):info:commit' format ':%.7c'
 	zstyle ':prezto:module:(git*|hg*):info:deleted' format  ''
@@ -289,6 +287,32 @@ function __setup_vcs_style {
     }
 }
 
+function prompt_host {
+    local hostcolor
+    local host="$(hostname)"
+    fg=16
+    case $host in
+	pmallappa-server)
+            bg=10
+	    fg=16;;
+	pmallappa-laptop)
+	    bg=166;;
+	pmallappa-test)
+            bg=cyan;;
+	imac* | iMac*)
+	    bg=magenta ;;
+	*-vm)
+            bg=$(($RANDOM%256)) ;;
+	*)
+            bg=gray  ;;
+    esac
+    #CURRENT_BG="$bg"
+    echo -n "%F{$bg}$host%f"
+    if [[ -n "$SCHROOT_SESSION_ID" ]]; then
+	echo -n "%F{red} [chroot]%f"
+    fi
+}
+
 prompt_yadu_setup() {
 	# prevent percentage showing up
 	# if output doesn't end with a newline
@@ -315,7 +339,7 @@ prompt_yadu_setup() {
 
 	# prompt turns red if the previous command didn't exit with 0
 	#PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
-	YADU_PROMPT_SYMBOL="%m %F{red}>%F{yellow}>%F{green}>%f "
+	YADU_PROMPT_SYMBOL="$(prompt_host) %F{red}>%F{yellow}>%F{green}>%f "
 	PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
 }
 
