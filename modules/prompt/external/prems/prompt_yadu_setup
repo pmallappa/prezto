@@ -59,7 +59,7 @@ prompt_yadu_preprompt_render() {
 	# construct prompt, beginning with path
 	local prompt="%F{blue}%~%f"
 	# git info
-	prompt+="%F{$git_color}${vcs_info_msg_0_}${prompt_yadu_git_dirty}%f"
+	prompt+="%F{$git_color}${prompt_yadu_git_dirty}%f"
 	# git pull/push arrows
 	prompt+="%F{cyan}${prompt_yadu_git_arrows}%f"
 	# username and machine if applicable
@@ -117,6 +117,47 @@ prompt_yadu_precmd() {
 	unset prompt_yadu_cmd_timestamp
 }
 
+function prompt_vcs {
+    #set -x
+
+    if [[ -n "${my_hook_com[vcsformatted]}" ]]; then
+	echo -n "${my_hook_com[vcsformatted]}"
+    fi
+
+    case ${my_hook_com[vcs]} in
+	git*|hg*)
+	    [[ -n "${my_hook_com[stash]}" ]] && \
+		echo -n "[${my_hook_com[stash]}]"
+	    if [[ -n "${my_hook_com[ahead]}" && -n "${my_hook_com[behind]}" ]];	then
+		local sep="/"
+	    fi
+	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
+		echo -n "["
+		echo -n "${my_hook_com[ahead]}"
+		echo -n "$sep"
+		echo -n "${my_hook_com[behind]}"
+		echo -n "]"
+	    fi
+
+	    echo -n "${my_hook_com[branch]}"
+
+	    [[ -n "${my_hook_com[remote]}" ]] && \
+	    echo -n "${my_hook_com[remote]}"
+
+	    [[ -n "${my_hook_com[status]}" ]] && \
+		echo -n " |${my_hook_com[status]}"
+
+	    [[ -n "${my_hook_com[action]}" ]] && \
+		echo -n " ${my_hook_com[action]}"
+	    ;;
+	*)
+	    echo -n "$vcs_info_msg_0_"
+	    return
+	    ;;
+    esac
+    #set +x
+}
+
 # fastest possible way to check if repo is dirty
 prompt_yadu_async_git_dirty() {
 	local untracked_dirty=$2
@@ -124,15 +165,8 @@ prompt_yadu_async_git_dirty() {
 	[[ "$untracked_dirty" == "0" ]] && umode="-uno"
 
 	cd "$1"
-	command test -n "$(git status --porcelain --ignore-submodules ${umode})"
-	(($? == 0)) && echo "*"
-}
-
-prompt_yadu_async_git_fetch() {
-	cd "$1"
-
-	# set GIT_TERMINAL_PROMPT=0 to disable auth prompting for git fetch (git 2.3+)
-	GIT_TERMINAL_PROMPT=0 command git -c gc.auto=0 fetch
+	vcs_info
+	prompt_vcs
 }
 
 prompt_yadu_async_tasks() {
@@ -163,7 +197,7 @@ prompt_yadu_async_tasks() {
 	[[ "${working_tree}" != "" ]] || return
 
 	# tell worker to do a git fetch
-	async_job "prompt_yadu" prompt_yadu_async_git_fetch $working_tree
+	#async_job "prompt_yadu" prompt_yadu_async_git_fetch $working_tree
 
 	# if dirty checking is sufficiently fast, tell worker to check it again, or wait for timeout
 	local dirty_check=$(( $EPOCHSECONDS - ${prompt_yadu_git_delay_dirty_check:-0} ))
@@ -198,6 +232,63 @@ prompt_yadu_async_callback() {
 	esac
 }
 
+function __setup_vcs_style {
+    zstyle ':vcs_info:*' formats ''
+    zstyle ':vcs_info:*' actionformats '{|%s%f%c: %b|%a}'
+
+    # This includes git-svn, hg-svn, hg-git etc
+    zstyle ':vcs_info:(hg*|git*):*' get-revision true
+    zstyle ':vcs_info:(hg*|git*):*' check-for-changes true
+
+    ### Mark individual style
+    () {
+	zstyle ':prezto:module:git:info' verbose 'yes'
+
+	zstyle ':prezto:module:(git*|hg*):vcsformatted' format "| %%F{039}%v%%f"
+
+	zstyle ':prezto:module:(git*|hg*):info:action' format ':%s'
+	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
+	zstyle ':prezto:module:(git*|hg*):info:ahead' format  '+%A'
+	zstyle ':prezto:module:(git*|hg*):info:behind' format  '-%B'
+	zstyle ':prezto:module:(git*|hg*):info:branch' format ': %%F{111}%b%%f'
+	zstyle ':prezto:module:(git*|hg*):info:remote' format ' => %%F{67}%R%%f'
+	zstyle ':prezto:module:(git*|hg*):info:commit' format ':%.7c'
+	zstyle ':prezto:module:(git*|hg*):info:deleted' format  ''
+	zstyle ':prezto:module:(git*|hg*):info:modified' format  '%%F{197} ●%%f '
+	zstyle ':prezto:module:(git*|hg*):info:position' format ':%p'
+	zstyle ':prezto:module:(git*|hg*):info:renamed' format  '%%F{207} ●%%f'
+	zstyle ':prezto:module:(git*|hg*):info:stashed' format  '%%B%%F{141}*%%f%%b'
+	zstyle ':prezto:module:(git*|hg*):info:unmerged' format  '═ '
+	zstyle ':prezto:module:(git*|hg*):info:untracked' format '%%F{95} ●%%f '
+	zstyle ':prezto:module:git:info:action' format '[%%F{226}%s%%f] '
+
+	zstyle ':prezto:module:(git*|hg*):info:keys' format \
+	    'ahead'     '%A' \
+	    'behind'    '%B' \
+	    'added'     '%a' \
+	    'deleted'   '%d' \
+	    'modified'  '%m' \
+	    'renamed'   '%r' \
+	    'untracked' '%u' \
+	    'branch'    '%b' \
+	    'remote'    '%R' \
+	    'stash'     '%S' \
+	    'status'    '%U%C%a%d%m%r%u' \
+	    'action'    '%s'
+    }
+
+    ## Mercurial specific
+    () {
+	# VCS name in prompt
+	zstyle ':prezto:module:hg*:vcs' format "| %%F{039}%v%%f"
+    }
+
+    ## Git specific
+    () {
+	zstyle ':prezto:module:git*:vcs' format '| %%F{140}%v%%F'
+    }
+}
+
 prompt_yadu_setup() {
 	# prevent percentage showing up
 	# if output doesn't end with a newline
@@ -209,14 +300,12 @@ prompt_yadu_setup() {
 	autoload -Uz add-zsh-hook
 	autoload -Uz vcs_info
 	autoload -Uz async && async
+	autoload -Uz colors && colors
 
 	add-zsh-hook precmd prompt_yadu_precmd
 	add-zsh-hook preexec prompt_yadu_preexec
 
-	zstyle ':vcs_info:*' enable git
-	zstyle ':vcs_info:*' use-simple true
-	zstyle ':vcs_info:git*' formats ' %b'
-	zstyle ':vcs_info:git*' actionformats ' %b|%a'
+	__setup_vcs_style
 
 	# show username@host if logged in through SSH
 	[[ "$SSH_CONNECTION" != '' ]] && prompt_yadu_username=' %F{242}%n@%m%f'
@@ -225,7 +314,9 @@ prompt_yadu_setup() {
 	[[ $UID -eq 0 ]] && prompt_yadu_username=' %F{white}%n%f%F{242}@%m%f'
 
 	# prompt turns red if the previous command didn't exit with 0
-	PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:-❯}%f "
+	#PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
+	YADU_PROMPT_SYMBOL="%m %F{red}>%F{yellow}>%F{green}>%f "
+	PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
 }
 
 prompt_yadu_setup "$@"
