@@ -1,0 +1,8 @@
+zap () {
+    open -a AppZapper /Applications/"${1}".app
+}
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

@@ -1,0 +1,9 @@
+dashboard-disable() {
+    defaults write com.apple.dashboard mcx-disabled -boolean YES
+    killall Dock
+}
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

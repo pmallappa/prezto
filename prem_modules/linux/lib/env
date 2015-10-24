@@ -1,0 +1,29 @@
+#
+# All the Linux related initialization
+#
+
+if [ -e /usr/local/plan9 ]; then
+	path+=/usr/local/plan9/bin
+	export PLAN9=/usr/local/plan9
+fi
+
+goroot_paths+=('/usr/local/go'
+	       '/usr/lib/go'
+	       )
+
+set_go_paths
+
+## We dont want to clutter the namespace
+unfunction set_go_paths
+unset goroot_paths
+
+
+export VISUAL="${EMACS} -q -nw -eval \"(progn (setq inhibit-startup-message t)(global-font-lock-mode t))\""
+
+export EDITOR="${EMACS} -q -nw -eval \"(progn (setq inhibit-startup-message t)(global-font-lock-mode t))\""
+
+export CSCOPE_EDITOR="${EMACS} -q -nw -eval \"(progn (setq inhibit-startup-message t)(global-font-lock-mode t))\""
+
+# Local Variables:
+#    mode:shell-script
+# End:

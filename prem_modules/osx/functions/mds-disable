@@ -1,0 +1,8 @@
+mds-disable() {
+    sudo mdutil -a -i off
+}
+
+
+# Local Variables:
+#    mode:shell-script
+# End:

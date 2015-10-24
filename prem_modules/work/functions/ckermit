@@ -1,0 +1,48 @@
+#########
+# Wrapper for ckermit
+#
+# Author: Prem Mallappa <prem.mallappa@gmail.com>
+# Copyright (C) 2013
+#
+##########
+# Return if requirements are not found.
+if (( ! $+commands[ckermit] )); then
+  return 1
+fi
+usage="$(
+cat <<EOF
+usage $0 [-option=arg] [arg]
+options:
+-d	Device name, default [/dev/ttyUSB0]
+-b	Baud rate, default [115200]
+arg:
+/dev/ttyUSB0	full path
+ttyUSB0		/dev assumed
+[0-9]		/dev/ttyUSB assumed
+EOF
+)"
+
+local o
+local baud="115200"
+local dev="/dev/ttyUSB0"
+
+_ckermit() {
+    while getopts b:d: o
+    do
+	case $o in
+	    b) baud="$OPTARG";;
+	    d) dev="$OPTARG";;
+	    *) print "$usage" >&2 && return
+	esac
+    done
+    shift $(( $OPTIND -1 ))
+    case $1 in
+	/*) dev=${1};;
+	tty*) dev="/dev/${1}";;
+	[0-9]) dev="/dev/ttyUSB${1}";;
+	*) print "$usage" >&2 && return
+    esac
+}
+_ckermit $@
+
+command ckermit -l ${dev} -b ${baud} -c

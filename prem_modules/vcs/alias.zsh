@@ -1,0 +1,17 @@
+
+# mercurial zeesh plugin
+alias hgi='hg id -n -b -t'
+alias hgs='hg status'
+alias hga='hg add -v'
+alias hgr='hg rm -f -v'
+alias hgpl='hg pull'
+alias hgps='hg push'
+alias hgf='hg fetch'
+alias hgu='hg up'
+alias hgcp='hg ci && hg push'
+alias hgm='hg merge'
+alias hgl='hg log -r :-1'
+alias hgd='hg diff'
+alias hgds='hg diff --stat'
+alias hg-merge-local='hg --config ui.merge=internal:local merge'
+alias hg-merge-other='hg --config ui.merge=internal:other merge'

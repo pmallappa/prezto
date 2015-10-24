@@ -1,0 +1,29 @@
+
+EMACS="/Applications/Emacs.app/Contents/MacOS/Emacs"
+
+function find_emacs_client() {
+	echo "/usr/local/bin/emacsclient"
+}
+
+EMACSCLIENT=`find_emacs_client`
+
+goroot_paths+=('/usr/local/Cellar/go/HEAD'
+	      '/usr/local/Cellar/go/1.3'
+	      )
+
+set_go_paths
+
+## We dont want to clutter the namespace
+unfunction set_go_paths
+unset goroot_paths
+
+if [ -e /usr/local/plan9 ]; then
+	export PLAN9=/usr/local/plan9
+	path+=${PLAN9}/bin
+fi
+
+export PATH=$PATH:${GOROOT}/bin
+
+# Local Variables:
+#    mode:shell-script
+# End:
