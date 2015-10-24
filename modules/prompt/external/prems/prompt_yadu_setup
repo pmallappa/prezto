@@ -22,17 +22,6 @@ prompt_yadu_check_cmd_exec_time() {
 	(($elapsed > ${YADU_CMD_MAX_EXEC_TIME:=5})) && prompt_yadu_human_time $elapsed
 }
 
-prompt_yadu_check_git_arrows() {
-	# check if there is an upstream configured for this branch
-	command git rev-parse --abbrev-ref @'{u}' &>/dev/null || return
-
-	local arrows=""
-	(( $(command git rev-list --right-only --count HEAD...@'{u}' 2>/dev/null) > 0 )) && arrows='⇣'
-	(( $(command git rev-list --left-only --count HEAD...@'{u}' 2>/dev/null) > 0 )) && arrows+='⇡'
-	# output the arrows
-	[[ "$arrows" != "" ]] && echo " ${arrows}"
-}
-
 prompt_yadu_preexec() {
 	prompt_yadu_cmd_timestamp=$EPOCHSECONDS
 
@@ -61,9 +50,9 @@ prompt_yadu_preprompt_render() {
 	# git info
 	prompt+="%F{$git_color}${prompt_yadu_git_dirty}%f"
 	# git pull/push arrows
-	prompt+="%F{cyan}${prompt_yadu_git_arrows}%f"
+	#prompt+="%F{cyan}${prompt_yadu_git_arrows}%f"
 	# username and machine if applicable
-	prompt+=$prompt_yadu_username
+	#prompt+=$prompt_yadu_username
 	# execution time
 	prompt+="%F{yellow}${prompt_yadu_cmd_exec_time}%f"
 
@@ -72,7 +61,8 @@ prompt_yadu_preprompt_render() {
 		print -P "\n${prompt}"
 	else
 		# only redraw if prompt has changed
-		[[ "${prompt_yadu_last_preprompt}" != "${prompt}" ]] || return
+		[[ "${prompt_yadu_last_preprompt}" != "${prompt}" ]] || \
+				return
 
 		# calculate length of prompt for redraw purposes
 		local prompt_length=$(prompt_yadu_string_length $prompt)
@@ -98,17 +88,25 @@ prompt_yadu_precmd() {
 	# with the initial preprompt rendering
 	prompt_yadu_cmd_timestamp=
 
-	# check for git arrows
-	prompt_yadu_git_arrows=$(prompt_yadu_check_git_arrows)
-
 	# shows the full path in the title
 	print -Pn '\e]0;%~\a'
 
-	# get vcs info
-	vcs_info
+	#set -x
+	# get vcs info, selectively execute
+	case "$(fc -ln $(($HISTCMD-1)))" in
+	hg*|git*)
+		zstyle ':prezto:module:vcs' run 'yes'
+		;;
+	default)
+		zstyle ':prezto:module:vcs' run 'no'
+		;;
+	esac
 
+	#set +x
+	local run_vcs
+	zstyle -s ':prezto:module:vcs' run 'run_vcs'
 	# preform async git dirty check and fetch
-	prompt_yadu_async_tasks
+	prompt_yadu_async_tasks  ${run_vcs}
 
 	# print the preprompt
 	prompt_yadu_preprompt_render "precmd"
@@ -132,11 +130,11 @@ function prompt_vcs {
 		local sep="/"
 	    fi
 	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
-		echo -n "["
+		echo -n "%F{015}["
 		echo -n "${my_hook_com[ahead]}"
 		echo -n "$sep"
 		echo -n "${my_hook_com[behind]}"
-		echo -n "]"
+		echo -n "]%f"
 	    fi
 
 	    echo -n "${my_hook_com[branch]}"
@@ -165,11 +163,17 @@ prompt_yadu_async_git_dirty() {
 	[[ "$untracked_dirty" == "0" ]] && umode="-uno"
 
 	cd "$1"
-	vcs_info
+	#if zstyle -t ':prezto:module:vcs' run 'yes'; then
+		my_hook_com=()
+		vcs_info
+	#	zstyle ':prezto:module:vcs' run 'no'
+	#fi
 	prompt_vcs
 }
 
 prompt_yadu_async_tasks() {
+	run_vcs=$1
+
 	# initialize async worker
 	((!${prompt_yadu_async_init:-0})) && {
 		async_start_worker "prompt_yadu" -u -n
@@ -181,6 +185,7 @@ prompt_yadu_async_tasks() {
 	local working_tree="$(command git rev-parse --show-toplevel 2>/dev/null)"
 
 	# check if the working tree changed, it is prefixed with "x" to prevent variable resolution in path
+	#set -x
 	if [ "${prompt_yadu_current_working_tree:-x}" != "x${working_tree}" ]; then
 		# stop any running async jobs
 		async_flush_jobs "prompt_yadu"
@@ -202,13 +207,19 @@ prompt_yadu_async_tasks() {
 	# if dirty checking is sufficiently fast, tell worker to check it again, or wait for timeout
 	local dirty_check=$(( $EPOCHSECONDS - ${prompt_yadu_git_delay_dirty_check:-0} ))
 	if (( $dirty_check > ${YADU_GIT_DELAY_DIRTY_CHECK:-1800} )); then
+		run_vcs='yes'
+	fi
+
+	if [[ "${run_vcs}" == "yes" ]] ; then
 		unset prompt_yadu_git_delay_dirty_check
 		(( ${YADU_GIT_PULL:-1} )) &&
 		# make sure working tree is not $HOME
 		[[ "${working_tree}" != "$HOME" ]] &&
 		# check check if there is anything to pull
-		async_job "prompt_yadu" prompt_yadu_async_git_dirty $working_tree $YADU_GIT_UNTRACKED_DIRTY
+		async_job "prompt_yadu" prompt_yadu_async_git_dirty $working_tree \
+			$YADU_GIT_UNTRACKED_DIRTY
 	fi
+	#set +x
 }
 
 prompt_yadu_async_callback() {
@@ -246,8 +257,8 @@ function __setup_vcs_style {
 
 	zstyle ':prezto:module:(git*|hg*):vcsformatted' format "| %%F{039}%v%%f"
 	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
-	zstyle ':prezto:module:(git*|hg*):info:ahead' format  '+%A'
-	zstyle ':prezto:module:(git*|hg*):info:behind' format  '-%B'
+	zstyle ':prezto:module:(git*|hg*):info:ahead' format  '%%F{185}+%A%%f'
+	zstyle ':prezto:module:(git*|hg*):info:behind' format  '%%F{213}-%B%%f'
 	zstyle ':prezto:module:(git*|hg*):info:branch' format '%%F{015}%%f: %%F{111}%b%%f'
 	zstyle ':prezto:module:(git*|hg*):info:remote' format ' => %%F{67}%R%%f'
 	zstyle ':prezto:module:(git*|hg*):info:commit' format ':%.7c'
@@ -313,6 +324,18 @@ function prompt_host {
     fi
 }
 
+function build_rprompt() {
+    local symbols
+    local j
+    symbols=()
+        #[[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
+    [[ $RETVAL -ne 0 ]] && symbols+="%B%F{red}X[$RETVAL]%f%b"
+    [[ $UID -eq 0 ]] && symbols+="%F{yellow}ROOT%f"
+    [[ $(jobs -l | wc -l) -gt 0 ]] && j="& "
+    [[ -n "$j" ]] && echo -n "%F{208} $j%f"
+    [[ -n "$symbols" ]] && echo -n "%F{247} $symbols%f"
+}
+
 prompt_yadu_setup() {
 	# prevent percentage showing up
 	# if output doesn't end with a newline
@@ -332,15 +355,16 @@ prompt_yadu_setup() {
 	__setup_vcs_style
 
 	# show username@host if logged in through SSH
-	[[ "$SSH_CONNECTION" != '' ]] && prompt_yadu_username=' %F{242}%n@%m%f'
+	[[ "$SSH_CONNECTION" != '' ]] && prompt_yadu_username=' %F{242}%n@$(prompt_host)%f'
 
 	# show username@host if root, with username in white
-	[[ $UID -eq 0 ]] && prompt_yadu_username=' %F{white}%n%f%F{242}@%m%f'
+	[[ $UID -eq 0 ]] && prompt_yadu_username=' %F{white}%n%f%F{242}@%$(prompt_host)%f'
 
 	# prompt turns red if the previous command didn't exit with 0
 	#PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
 	YADU_PROMPT_SYMBOL="$(prompt_host) %F{red}>%F{yellow}>%F{green}>%f "
 	PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
+	RPROMPT='$(build_rprompt)'
 }
 
 prompt_yadu_setup "$@"
