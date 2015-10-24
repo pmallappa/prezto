@@ -1,0 +1,314 @@
+##
+## Authour: Prem Mallappa <prem.mallappa@gmail.com
+##
+# Heavily derived from agnoster/mudasobwa/
+# Credits to original authors.
+#
+#
+## Setup usual git info
+
+# function ___trim() {
+#     local var=$@
+#     var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
+#     var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
+#     echo -n "$var"
+# }
+
+# Begin a segment
+# Takes two arguments, background and foreground. Both can be omitted,
+# rendering default background/foreground.
+autoload -Uz add-zsh-hook
+autoload -Uz vcs_info
+
+function prompt_segment() {
+    local bg fg
+    [[ -n $1 ]] && bg=${BG[$1]} || bg=${BG[none]}
+    [[ -n $2 ]] && fg=${FG[$2]} || fg=${FG[none]}
+    if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
+	echo -n  "%{${bg}${FG[$CURRENT_BG]}%}${SEGMENT_SEPARATOR}%{${fg}%}"
+    else
+	echo -n  "%{${bg}${fg}%}"
+    fi
+    CURRENT_BG="$1"
+    [[ -n $3 ]] && echo -n $3
+}
+
+function prompt_end {
+    if [[ -n $CURRENT_BG ]]; then
+	echo -n  "%{${BG[none]}$FG[$CURRENT_BG]%}$SEGMENT_SEPARATOR"
+    else
+	echo -n  "%{${BG[none]}%}"
+    fi
+    echo -n  "%{${FG[none]}%}"
+    CURRENT_BG=''
+}
+
+# Begin an right segment
+# Takes two arguments, background and foreground. Both can be omitted,
+# rendering default background/foreground.
+function prompt_rsegment() {
+    local bg fg
+    [[ -n $1 ]] && bg=${BG[$1]} || bg=${BG[none]}
+    [[ -n $2 ]] && fg=${FG[$2]} || fg=${FG[none]}
+    if [[ $1 != $CURRENT_BG ]]; then
+	echo -n  "%{${fg}${SEGMENT_RSEPARATOR}${bg}${fg}%}"
+    else
+	echo -n  "%{${bg}${fg}%}"
+    fi
+    CURRENT_BG=$bg
+    [[ -n $3 ]] && echo -n $3
+}
+
+# End the rprompt, closing any open segments
+function prompt_rend() {
+    if [[ -n $CURRENT_BG ]]; then
+	echo -n " %{${BG[none]}%}%{$FG[$CURRENT_BG]%}"
+    else
+	echo -n "%{${BG[none]}%}"
+    fi
+    echo -n "%{${FG[none]}%}"
+    CURRENT_BG=NONE
+}
+
+function prompt_dir {
+    prompt_segment "" 178 "%~"
+}
+
+function prompt_host {
+    local hostcolor
+    local host="$(hostname)"
+    fg=16
+    case $host in
+	pmallappa-server)
+            bg=10
+	    fg=16;;
+	pmallappa-laptop)
+	    bg=166;;
+	pmallappa-test)
+            bg=cyan;;
+	imac* | iMac*)
+	    bg=magenta ;;
+	*-vm)
+            bg=$(($RANDOM%256)) ;;
+	*)
+            bg=gray  ;;
+    esac
+    #CURRENT_BG="$bg"
+    prompt_segment "" $bg $host
+    if [[ -n "$SCHROOT_SESSION_ID" ]]; then
+	prompt_segment "" red " [chroot]"
+    fi
+}
+
+
+function prompt_status() {
+    local symbols
+    local j
+    symbols=()
+	#[[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ [$RETVAL]"
+    [[ $RETVAL -ne 0 ]] && symbols+="%{%B%F{red}%}X[$RETVAL]"
+    [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}ROOT"
+    [[ $(jobs -l | wc -l) -gt 0 ]] && j="& "
+    [[ -n "$j" ]] && prompt_rsegment "" 208 "$j"
+    [[ -n "$symbols" ]] && prompt_rsegment "" 247 "$symbols"
+}
+
+function __reset__ {
+    #prompt_segment "" "" ""
+    prompt_end
+}
+
+function prompt_vcs {
+    #set -x
+    __reset__
+    if [[ -n "${my_hook_com[vcsformatted]}" ]]; then
+	prompt_segment "" "" "${my_hook_com[vcsformatted]}"
+    fi
+    __reset__
+
+    case ${my_hook_com[vcs]} in
+	git*|hg*)
+	    [[ -n "${my_hook_com[stash]}" ]] && \
+		prompt_segment "" "" "[${my_hook_com[stash]}]"
+	    if [[ -n "${my_hook_com[ahead]}" && -n "${my_hook_com[behind]}" ]];	then
+		local sep="/"
+	    fi
+	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
+		prompt_segment "" "" "["
+		    prompt_segment "" 185 "${my_hook_com[ahead]}"
+		prompt_segment "" "" "$sep"
+		    prompt_segment "" 213 "${my_hook_com[behind]}"
+
+		prompt_segment "" "" "]"
+	    fi
+	    SEGMENT_SEPARATOR=""
+	    prompt_segment "" "" "${my_hook_com[branch]}"
+
+	    [[ -n "${my_hook_com[remote]}" ]] && \
+	    prompt_segment "" "" "${my_hook_com[remote]}"
+
+	    [[ -n "${my_hook_com[status]}" ]] && \
+		prompt_segment "" "" " |${my_hook_com[status]}"
+
+	    [[ -n "${my_hook_com[action]}" ]] && \
+		prompt_segment "" "" " ${my_hook_com[action]}"
+	    ;;
+	*)
+	    echo -n "$vcs_info_msg_0_"
+	    return
+	    ;;
+    esac
+    #set +x
+}
+
+function build_prompt {
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
+    #set -x
+
+    RETVAL=$?
+    prompt_dir
+    prompt_vcs
+    prompt_end
+}
+
+function build_rprompt {
+    RETVAL=$?
+    #prompt_git
+    prompt_status
+    prompt_rend
+}
+
+# Must run vcs_info when changing directories.
+function _prompt_prems_chpwd() {
+    #set -x
+    zstyle ':prezto:module:vcs' run 'yes'
+    #my_hook_com=()
+    #vcs_info
+    #fi
+    #set +x
+}
+
+function _prompt_prems_precmd {
+    #PS4='$(date "+%s.%N ($LINENO) + ")'
+    #set -x
+    case "$(fc -ln $(($HISTCMD-1)))" in
+        hg*|git*)
+            zstyle ':prezto:module:vcs' run 'yes'
+            ;;
+        default)
+            zstyle ':prezto:module:vcs' run 'no'
+            ;;
+    esac
+
+    if zstyle -t ':prezto:module:vcs' run 'yes'; then
+	my_hook_com=()
+	vcs_info
+	zstyle ':prezto:module:vcs' run 'no'
+    fi
+    #set +x
+}
+
+function __setup_vcs_style {
+    zstyle ':vcs_info:*' formats ''
+    zstyle ':vcs_info:*' actionformats '{|%s%f%c: %b|%a}'
+
+    # This includes git-svn, hg-svn, hg-git etc
+    zstyle ':vcs_info:(hg*|git*):*' get-revision true
+    zstyle ':vcs_info:(hg*|git*):*' check-for-changes true
+
+    ### Mark individual style
+    () {
+	zstyle ':prezto:module:git:info' verbose 'yes'
+
+	zstyle ':prezto:module:(git*|hg*):vcsformatted' format "| %%F{039}%v%%f"
+
+	zstyle ':prezto:module:(git*|hg*):info:action' format ':%s'
+	zstyle ':prezto:module:(git*|hg*):info:added' format  '%%F{40} ●%%f '
+	zstyle ':prezto:module:(git*|hg*):info:ahead' format  '+%A'
+	zstyle ':prezto:module:(git*|hg*):info:behind' format  '-%B'
+	zstyle ':prezto:module:(git*|hg*):info:branch' format ': %%F{111}%b%%f'
+	zstyle ':prezto:module:(git*|hg*):info:remote' format ' => %%F{67}%R%%f'
+	zstyle ':prezto:module:(git*|hg*):info:commit' format ':%.7c'
+	zstyle ':prezto:module:(git*|hg*):info:deleted' format  ''
+	zstyle ':prezto:module:(git*|hg*):info:modified' format  '%%F{197} ●%%f '
+	zstyle ':prezto:module:(git*|hg*):info:position' format ':%p'
+	zstyle ':prezto:module:(git*|hg*):info:renamed' format  '%%F{207} ●%%f'
+	zstyle ':prezto:module:(git*|hg*):info:stashed' format  '%%B%%F{141}*%%f%%b'
+	zstyle ':prezto:module:(git*|hg*):info:unmerged' format  '═ '
+	zstyle ':prezto:module:(git*|hg*):info:untracked' format '%%F{95} ●%%f '
+	zstyle ':prezto:module:git:info:action' format '[%%F{226}%s%%f] '
+
+	zstyle ':prezto:module:(git*|hg*):info:keys' format \
+	    'ahead'     '%A' \
+	    'behind'    '%B' \
+	    'added'     '%a' \
+	    'deleted'   '%d' \
+	    'modified'  '%m' \
+	    'renamed'   '%r' \
+	    'untracked' '%u' \
+	    'branch'    '%b' \
+	    'remote'    '%R' \
+	    'stash'     '%S' \
+	    'status'    '%U%C%a%d%m%r%u' \
+	    'action'    '%s'
+    }
+
+    ## Mercurial specific
+    () {
+	# VCS name in prompt
+	zstyle ':prezto:module:hg*:vcs' format "| %%F{039}%v%%f"
+    }
+
+    ## Git specific
+    () {
+	zstyle ':prezto:module:git*:vcs' format '| %%F{140}%v%%F'
+    }
+}
+
+function prompt_prems_setup {
+    # Load required functions.
+    setopt LOCAL_OPTIONS
+    unsetopt XTRACE KSH_ARRAYS
+
+    prompt_opts=(cr percent subst)
+
+    local NL=$'\n'
+
+    #__setup_vcs
+    __setup_vcs_style
+
+    # Initially set vcs run to yes
+    zstyle ':prezto:module:vcs' run 'yes'
+
+    zstyle ':prezto:module:editor:info:keymap:primary' format "%F{red}>%F{yellow}>%F{green}>%f "
+
+    # Add hook for calling git-info before each command.
+    if [[ ${ZSH_VERSION} > 4.3.0 ]]; then
+	add-zsh-hook precmd _prompt_prems_precmd
+	add-zsh-hook chpwd _prompt_prems_chpwd
+    else
+	PROMPT="[$FG[046]%n${RST}:$FX[bold]$FG[240]%~${RST}$vcs_info_msg_0_] $NL$FG[046]%m%f %% "
+	return
+    fi
+
+    CURRENT_BG='NONE'
+    SEGMENT_SEPARATOR='|'
+    #SEGMENT_RSEPARATOR='|'
+
+    PROMPT='
+%{%f%b%k%}$(build_prompt)
+$(prompt_host) ${editor_info[keymap]}'
+    RPROMPT='%{$reset_color%}$(build_rprompt)%{$reset_color%}'
+
+    ## remove all that one-time definitions
+    #unfunction __setup_vcs
+    #unfunction __setup_vcs_style
+}
+
+prompt_prems_setup "$@"
+
+
+##
+# Local Variables:
+# mode: shell-script
+# End:
