@@ -1,0 +1,29 @@
+##
+# Send command to all windows in a session
+##
+local -a sessions
+local s
+sessions=(${(@)$(tmux list-sessions -F '#S')})
+curses=$(tmux display-message -p "#S")
+
+if (( ${#sessions} > 1 )); then
+    local s=$sessions[1]
+    print -l "${sessions[@]} ${#sessions}"
+    echo -n "Select a session ($sessions)[$curses]:"
+    read s
+fi
+
+echo $s 
+if [ "X$s" ! ="X" ]; then
+   if [ "X$curses" == "X" ]; then
+	echo "Not running inside TMUX, You must select a session" && return
+   fi
+   s=$curses
+fi
+windows=("${(@f)$(tmux list-windows -F '#I')}");
+for window in $windows; do
+    panes=("${(@f)$(tmux list-panes -t $s:$window -F '#P')}");
+    for pane in $panes; do
+	tmux send-keys -t "$s:$window.$pane" "$@" "C-m"
+    done
+done

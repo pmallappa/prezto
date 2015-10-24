@@ -30,6 +30,9 @@ zstyle ':prezto:load' pmodule \
   'history' \
   'directory' \
   'spectrum' \
+  'tmux' \
+  'gpg' \
+  'ssh' \
   'utility' \
   'completion' \
   'prompt'
@@ -58,6 +61,7 @@ zstyle ':prezto:module:editor' key-bindings 'emacs'
 # Set the command prefix on non-GNU systems.
 # zstyle ':prezto:module:gnu-utility' prefix 'g'
 
+zstyle ':prezto:module:utility:ls' color 'yes'
 #
 # History Substring Search
 #
@@ -85,7 +89,7 @@ zstyle ':prezto:module:editor' key-bindings 'emacs'
 # Set the prompt theme to load.
 # Setting it to 'random' loads a random theme.
 # Auto set to 'off' on dumb terminals.
-zstyle ':prezto:module:prompt' theme 'sorin'
+zstyle ':prezto:module:prompt' theme 'pure'
 
 #
 # Ruby
@@ -109,7 +113,12 @@ zstyle ':prezto:module:prompt' theme 'sorin'
 #
 
 # Set the SSH identities to load into the agent.
-# zstyle ':prezto:module:ssh:load' identities 'id_rsa' 'id_rsa2' 'id_github'
+zstyle ':prezto:module:ssh:load' identities \
+    'id_rsa' \
+    'id_dsa_apslabuser' \
+    'id_rsa_github_gmail'
+
+
 
 #
 # Syntax Highlighting
@@ -117,18 +126,20 @@ zstyle ':prezto:module:prompt' theme 'sorin'
 
 # Set syntax highlighters.
 # By default, only the main highlighter is enabled.
-# zstyle ':prezto:module:syntax-highlighting' highlighters \
-#   'main' \
-#   'brackets' \
-#   'pattern' \
-#   'cursor' \
-#   'root'
+zstyle ':prezto:module:syntax-highlighting' color 'yes'
+zstyle ':prezto:module:syntax-highlighting' highlighters \
+  'main' \
+  'brackets' \
+  'pattern' \
+  'cursor' \
+  'root'
 #
 # Set syntax highlighting styles.
 # zstyle ':prezto:module:syntax-highlighting' styles \
 #   'builtin' 'bg=blue' \
 #   'command' 'bg=blue' \
 #   'function' 'bg=blue'
+#
 
 #
 # Terminal
@@ -143,15 +154,54 @@ zstyle ':prezto:module:prompt' theme 'sorin'
 # Set the tab title format.
 # zstyle ':prezto:module:terminal:tab-title' format '%m: %s'
 
-#
-# Tmux
-#
-
 # Auto start a session when Zsh is launched in a local terminal.
 # zstyle ':prezto:module:tmux:auto-start' local 'yes'
 
 # Auto start a session when Zsh is launched in a SSH connection.
 # zstyle ':prezto:module:tmux:auto-start' remote 'yes'
 
-# Integrate with iTerm2.
-# zstyle ':prezto:module:tmux:iterm' integrate 'yes'
+
+##############################################
+### PREMS CONFIGS
+#############################################
+# Set the Prezto modules to load (browse modules).
+# The order matters.
+zstyle ':prems:load' pmodule \
+  'z' \
+  'cygwin' \
+  'freebsd' \
+  'linux' \
+  'osx' \
+  'virtualbox' \
+  'vcs' \
+  'work'
+
+## Prompt
+zstyle ':prems:module:prompt' theme 'prems'
+
+## Tmux
+#zstyle ':prems:module:tmux' exe ''
+zstyle ':prems:module:tmux' default_session 'office'
+zstyle ':prems:module:tmux' emacs-window '5'
+
+
+zstyle ':prems:module:tmux:session:office' window_list \
+  'VULCAN'    \
+  'Linux'  \
+  'SMMU' \
+  'MISC' \
+  'Emacs'  \
+  'QEMU' \
+
+zstyle ':prems:module:tmux:session:home'  window_list \
+  'devel'  \
+  'GoSSiP' \
+  'Blog'   \
+
+## VCS, directly passed to vcs_info enable, disable
+zstyle ':prezto:module:vcs' disabled 'all'
+zstyle ':prezto:module:vcs' enabled \
+    'git' \
+    'hg' \
+    'svn' \
+    'bzr'

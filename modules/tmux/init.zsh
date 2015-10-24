@@ -13,15 +13,33 @@ if (( ! $+commands[tmux] )); then
   return 1
 fi
 
+local -a tmuxpath
+tmuxpath=('/tools/bin'
+    '/usr/local/bin' 
+    '/usr/bin' 
+    '/bin' 
+    "$HOME/bin" )
+
+case `uname` in
+    "[Ll]inux")
+	;;
+    "[Dd]arwin")
+	tmuxpath+="/usr/local/Cellar/bin"
+	;;
+    *)
+esac
+
+
+if ! zstyle -t ':prems:module:tmux' exe ; then
+    for p in $tmuxpath; do
+	[ -e "$p/tmux" ] && zstyle ':prems:module:tmux' exe "$p/tmux" && break
+    done
+fi
+
+
 #
 # Auto Start
 #
-
-if ([[ "$TERM_PROGRAM" = 'iTerm.app' ]] && \
-  zstyle -t ':prezto:module:tmux:iterm' integrate \
-); then
-  _tmux_iterm_integration='-CC'
-fi
 
 if [[ -z "$TMUX" && -z "$EMACS" && -z "$VIM" ]] && ( \
   ( [[ -n "$SSH_TTY" ]] && zstyle -t ':prezto:module:tmux:auto-start' remote ) ||
@@ -38,12 +56,12 @@ if [[ -z "$TMUX" && -z "$EMACS" && -z "$VIM" ]] && ( \
   fi
 
   # Attach to the 'prezto' session or to the last session used.
-  exec tmux $_tmux_iterm_integration attach-session
+  exec tmux attach-session
 fi
 
 #
 # Aliases
 #
 
-alias tmuxa="tmux $_tmux_iterm_integration new-session -A"
+alias tmuxa='tmux attach-session'
 alias tmuxl='tmux list-sessions'
