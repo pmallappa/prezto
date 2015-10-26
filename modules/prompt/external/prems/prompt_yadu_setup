@@ -118,6 +118,7 @@ prompt_yadu_precmd() {
 function prompt_vcs {
     #set -x
 
+    #echo -n "%F{015}"
     if [[ -n "${my_hook_com[vcsformatted]}" ]]; then
 	echo -n "${my_hook_com[vcsformatted]}"
     fi
@@ -130,11 +131,11 @@ function prompt_vcs {
 		local sep="/"
 	    fi
 	    if [[ -n "${my_hook_com[ahead]}" || -n "${my_hook_com[behind]}" ]]; then
-		echo -n "%F{015}["
+		echo -n "["
 		echo -n "${my_hook_com[ahead]}"
 		echo -n "$sep"
 		echo -n "${my_hook_com[behind]}"
-		echo -n "]%f"
+		echo -n "]"
 	    fi
 
 	    echo -n "${my_hook_com[branch]}"
@@ -153,6 +154,7 @@ function prompt_vcs {
 	    return
 	    ;;
     esac
+    #echo -n "%f"
     #set +x
 }
 
@@ -294,7 +296,7 @@ function __setup_vcs_style {
 
     ## Git specific
     () {
-	zstyle ':prezto:module:git*:vcs' format '| %%F{140}%v%%F'
+	zstyle ':prezto:module:git*:vcs' format '| %%F{140}%v%%f'
     }
 }
 
@@ -362,8 +364,8 @@ prompt_yadu_setup() {
 
 	# prompt turns red if the previous command didn't exit with 0
 	#PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
-	YADU_PROMPT_SYMBOL="$(prompt_host) %F{red}>%F{yellow}>%F{green}>%f "
-	PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f "
+	YADU_PROMPT_SYMBOL="$(prompt_host) %B%F{red}>%F{yellow}>%F{green}>%f%b "
+	PROMPT="%(?.%F{magenta}.%F{red})${YADU_PROMPT_SYMBOL:->>>}%f"
 	RPROMPT='$(build_rprompt)'
 }
 
